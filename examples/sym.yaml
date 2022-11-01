@@ -1,0 +1,32 @@
+deploy:
+  helm:
+   - name: hello-world
+     dependsOn:
+     - nginx-ingress
+     chart: ./charts/hello-world
+     valuesFile: "./charts/hello-world.yaml"
+     values:
+        key: "hello"
+        value: "world"
+   - name: kube-state-metrics
+     chart: prometheus-community/kube-state-metrics
+     repository:
+      name: prometheus-community
+      url: https://prometheus-community.github.io/helm-charts
+     values:
+        key: "image.tag"
+        value: "2.4.2"
+   - name: nginx-ingress
+     chart: prometheus-community/kube-state-metrics
+     repository:
+      name: ingress-nginx
+      url: https://kubernetes.github.io/ingress-nginx
+  kustomize:
+  - path: "./k8s"
+test: # Starts
+  - deployment:
+    - name: service
+      command: "go test"
+  - image: python-3.6:latest
+    command: curl test-url
+preview: {} # Creates preview cluster on PRs
