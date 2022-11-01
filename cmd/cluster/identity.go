@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"log"
 
-	_ "embed"
-
 	"github.com/spf13/cobra"
 	"github.com/symbiosis-cloud/cli/pkg/command"
 	"github.com/symbiosis-cloud/cli/pkg/identity"

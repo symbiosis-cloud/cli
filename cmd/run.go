@@ -9,8 +9,6 @@ import (
 	"log"
 	"time"
 
-	_ "embed"
-
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"github.com/symbiosis-cloud/cli/cmd/run"

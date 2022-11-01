@@ -4,7 +4,6 @@ Copyright © 2022 Symbiosis
 package cmd
 
 import (
-	_ "embed"
 	"fmt"
 	"log"
 
