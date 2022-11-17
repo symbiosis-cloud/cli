@@ -113,8 +113,8 @@ func (c *CreateClusterCommand) Command() *cobra.Command {
 			}
 
 			err = util.NewOutput(util.TableOutput{
-				Headers: []string{"ID", "Name", "Version", "Node type", "Node quantity"},
-				Data:    [][]interface{}{{cluster.ID, cluster.Name, nodeType, nodeCount}},
+				Headers: []string{"ID", "Name", "Version", "Node type", "# Nodes"},
+				Data:    [][]interface{}{{cluster.ID, cluster.Name, cluster.KubeVersion, nodeType, nodeCount}},
 			},
 				cluster,
 			).VariableOutput()
