@@ -1,2 +1,4 @@
 test/
 kubeconfig.yaml
+.DS_Store
+.symbiosis.project

@@ -5,35 +5,42 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/spf13/cobra"
-	"github.com/symbiosis-cloud/cli/cmd/run"
-	"github.com/symbiosis-cloud/cli/pkg/command"
 	"github.com/symbiosis-cloud/cli/pkg/identity"
+	"github.com/symbiosis-cloud/cli/pkg/project"
+	"github.com/symbiosis-cloud/cli/pkg/symcommand"
 	"github.com/symbiosis-cloud/symbiosis-go"
 )
 
 type ApplyCommand struct {
 	Client      *symbiosis.Client
-	CommandOpts *command.CommandOpts
+	CommandOpts *symcommand.CommandOpts
 }
 
-func (c *ApplyCommand) Execute(cmd *cobra.Command, args []string) error {
-	kubeConfig, err := cmd.Flags().GetString("identityOutputPath")
-	file, err := cmd.Flags().GetString("file")
+func (c *ApplyCommand) Execute(command *cobra.Command, args []string) error {
+
+	deploymentFlags, err := symcommand.GetDeploymentFlags(command)
 
 	if err != nil {
 		return err
 	}
 
-	runFile, err := run.ReadRunFile(file, c.CommandOpts)
+	c.CommandOpts.Namespace = deploymentFlags.Namespace
+
+	projectConfig, err := project.NewProjectConfig(deploymentFlags.File, c.CommandOpts, c.Client)
 
 	if err != nil {
 		return err
 	}
 
-	err = runFile.RunBuilders()
+	err = projectConfig.Parse()
+
+	if err != nil {
+		return err
+	}
+
+	err = projectConfig.RunBuilders()
 
 	if err != nil {
 		return err
@@ -50,22 +57,23 @@ func (c *ApplyCommand) Execute(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("Cluster %s does not exist", clusterName)
 	}
 
-	identity, err := identity.NewClusterIdentity(c.Client, clusterName, kubeConfig)
+	identity, err := identity.NewClusterIdentity(c.Client, clusterName, deploymentFlags.IdentityOutputPath, merge)
 
 	if err != nil {
 		return err
 	}
 
-	log.Printf("Written identity to %s\n", identity.KubeConfigPath)
-	runFile.SetIdentity(identity)
+	c.CommandOpts.Logger.Info().Msgf("Written identity to %s", identity.KubeConfigPath)
 
-	err = runFile.RunDeploy()
+	projectConfig.SetIdentity(identity)
+
+	err = projectConfig.RunDeploy()
 
 	if err != nil {
 		return err
 	}
 
-	log.Println("Apply finished.")
+	c.CommandOpts.Logger.Info().Msg("Apply finished.")
 
 	return nil
 }
@@ -79,13 +87,14 @@ func (c *ApplyCommand) Command() *cobra.Command {
 		RunE:  c.Execute,
 	}
 
-	cmd.Flags().String("file", "sym.yaml", "File to use (default: sym.yaml)")
-	cmd.Flags().String("identityOutputPath", "", "Write the generated kubeConfig file to this location")
+	cmd.Flags().BoolVar(&merge, "merge", false, "Merge the generated kubeConfig file with the one on your system")
+
+	symcommand.SetDeploymentFlags(cmd)
 
 	return cmd
 }
 
-func (c *ApplyCommand) Init(client *symbiosis.Client, opts *command.CommandOpts) {
+func (c *ApplyCommand) Init(client *symbiosis.Client, opts *symcommand.CommandOpts) {
 	c.Client = client
 	c.CommandOpts = opts
 }

@@ -16,7 +16,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/symbiosis-cloud/cli/pkg/command"
+	"github.com/symbiosis-cloud/cli/pkg/symcommand"
 	"github.com/symbiosis-cloud/symbiosis-go"
 )
 
@@ -51,7 +51,7 @@ func createListener() (l net.Listener, close func()) {
 
 type LoginCommand struct {
 	Client      *symbiosis.Client
-	CommandOpts *command.CommandOpts
+	CommandOpts *symcommand.CommandOpts
 }
 
 func (c *LoginCommand) Command() *cobra.Command {
@@ -59,13 +59,13 @@ func (c *LoginCommand) Command() *cobra.Command {
 		Use:   "login",
 		Short: "Prompts you to login to Symbiosis and store login details",
 		Long:  ``,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(command *cobra.Command, args []string) error {
 
 			l, close := createListener()
 			defer close()
 			http.Handle("/", http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 				if !r.URL.Query().Has("token") {
-					log.Printf("Could not retrieve token, please contact Symbiosis Support")
+					c.CommandOpts.Logger.Error().Msgf("Could not retrieve token, please contact Symbiosis Support")
 					close()
 				}
 
@@ -90,14 +90,14 @@ func (c *LoginCommand) Command() *cobra.Command {
 					}
 				}(r.Context())
 
-				log.Println("Successfully initialised")
+				c.CommandOpts.Logger.Info().Msg("Successfully initialised")
 
 			}))
 
 			localUrl := fmt.Sprintf("http://localhost:%d", l.Addr().(*net.TCPAddr).Port)
 			oauthUrl := fmt.Sprintf("https://app.symbiosis.host/oauth?redirect=%s", url.QueryEscape(localUrl))
 
-			log.Printf("Opening your browser to %s\n", oauthUrl)
+			c.CommandOpts.Logger.Info().Msgf("Opening your browser to %s", oauthUrl)
 
 			openbrowser(oauthUrl)
 
@@ -108,7 +108,7 @@ func (c *LoginCommand) Command() *cobra.Command {
 	}
 }
 
-func (c *LoginCommand) Init(client *symbiosis.Client, opts *command.CommandOpts) {
+func (c *LoginCommand) Init(client *symbiosis.Client, opts *symcommand.CommandOpts) {
 	c.Client = client
 	c.CommandOpts = opts
 }

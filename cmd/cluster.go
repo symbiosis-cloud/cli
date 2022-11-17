@@ -8,16 +8,16 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/symbiosis-cloud/cli/cmd/cluster"
-	"github.com/symbiosis-cloud/cli/pkg/command"
+	"github.com/symbiosis-cloud/cli/pkg/symcommand"
 	"github.com/symbiosis-cloud/symbiosis-go"
 )
 
 type ClusterCommand struct {
 	Client      *symbiosis.Client
-	CommandOpts *command.CommandOpts
+	CommandOpts *symcommand.CommandOpts
 }
 
-var clusterCommands []command.Command
+var clusterCommands []symcommand.Command
 
 func (c *ClusterCommand) Command() *cobra.Command {
 
@@ -25,8 +25,8 @@ func (c *ClusterCommand) Command() *cobra.Command {
 		Use:   "cluster",
 		Short: "Manage your clusters",
 		Long:  ``,
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			err := command.Initialise(clusterCommands, cmd)
+		PersistentPreRunE: func(command *cobra.Command, args []string) error {
+			err := symcommand.Initialise(clusterCommands, command)
 
 			if err != nil {
 				return err
@@ -34,25 +34,27 @@ func (c *ClusterCommand) Command() *cobra.Command {
 
 			return nil
 		},
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("Available commands: [create, list, delete, identity]")
+		Run: func(command *cobra.Command, args []string) {
+			fmt.Println("Available commands: [describe, create, list, delete, identity]")
 		},
 	}
 
-	clusterCommands = []command.Command{
+	clusterCommands = []symcommand.Command{
 		&cluster.ListClusterCommand{},
 		&cluster.DeleteClusterCommand{},
 		&cluster.ClusterIdentityCommand{},
+		&cluster.CreateClusterCommand{},
+		&cluster.DescribeClusterCommand{},
 	}
 
-	for _, command := range clusterCommands {
-		cmd.AddCommand(command.Command())
+	for _, c := range clusterCommands {
+		cmd.AddCommand(c.Command())
 	}
 
 	return cmd
 }
 
-func (c *ClusterCommand) Init(client *symbiosis.Client, opts *command.CommandOpts) {
+func (c *ClusterCommand) Init(client *symbiosis.Client, opts *symcommand.CommandOpts) {
 	c.Client = client
 	c.CommandOpts = opts
 }
