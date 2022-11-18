@@ -1,7 +1,7 @@
 /*
 Copyright © 2022 Symbiosis
 */
-package cluster
+package apikeys
 
 import (
 	"github.com/spf13/cobra"
@@ -10,14 +10,14 @@ import (
 	"github.com/symbiosis-cloud/symbiosis-go"
 )
 
-type ListClusterCommand struct {
+type ListApiKeysCommand struct {
 	Client      *symbiosis.Client
 	CommandOpts *symcommand.CommandOpts
 }
 
-func (c *ListClusterCommand) Execute(command *cobra.Command, args []string) error {
+func (c *ListApiKeysCommand) Execute(command *cobra.Command, args []string) error {
 
-	clusters, err := c.Client.Cluster.List(100, 0)
+	apiKeys, err := c.Client.ApiKeys.List()
 
 	if err != nil {
 		return err
@@ -25,15 +25,15 @@ func (c *ListClusterCommand) Execute(command *cobra.Command, args []string) erro
 
 	var data [][]interface{}
 
-	for _, cluster := range clusters.Clusters {
-		data = append(data, []interface{}{cluster.ID, cluster.Name, cluster.KubeVersion})
+	for _, apiKey := range apiKeys {
+		data = append(data, []interface{}{apiKey.ID, apiKey.Description, apiKey.Token, apiKey.Role})
 	}
 
 	err = util.NewOutput(util.TableOutput{
-		Headers: []string{"ID", "Name", "Version"},
+		Headers: []string{"ID", "Description", "Token", "Role"},
 		Data:    data,
 	},
-		clusters.Clusters,
+		apiKeys,
 	).VariableOutput()
 
 	if err != nil {
@@ -43,11 +43,11 @@ func (c *ListClusterCommand) Execute(command *cobra.Command, args []string) erro
 	return nil
 }
 
-func (c *ListClusterCommand) Command() *cobra.Command {
+func (c *ListApiKeysCommand) Command() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "list",
-		Short: "List your clusters",
+		Short: "List your api-keys",
 		Long:  ``,
 		RunE:  c.Execute,
 	}
@@ -55,7 +55,7 @@ func (c *ListClusterCommand) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *ListClusterCommand) Init(client *symbiosis.Client, opts *symcommand.CommandOpts) {
+func (c *ListApiKeysCommand) Init(client *symbiosis.Client, opts *symcommand.CommandOpts) {
 	c.Client = client
 	c.CommandOpts = opts
 }

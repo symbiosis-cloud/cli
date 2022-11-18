@@ -1,7 +1,7 @@
 /*
 Copyright © 2022 Symbiosis
 */
-package cluster
+package apikeys
 
 import (
 	"fmt"
@@ -12,29 +12,29 @@ import (
 	"github.com/symbiosis-cloud/symbiosis-go"
 )
 
-type DeleteClusterCommand struct {
+type DeleteApiKeyCommand struct {
 	Client      *symbiosis.Client
 	CommandOpts *symcommand.CommandOpts
 }
 
-func (c *DeleteClusterCommand) Command() *cobra.Command {
+func (c *DeleteApiKeyCommand) Command() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "delete",
-		Short: "Delete cluster",
+		Short: "Delete api-key",
 		Long:  ``,
 		PreRunE: func(command *cobra.Command, args []string) error {
 			if len(args) == 0 {
-				return fmt.Errorf("Please provide a cluster name (sym cluster delete <cluster>")
+				return fmt.Errorf("Please provide an api-key ID (sym api-key delete <id>")
 			}
 
-			return util.Confirmation(fmt.Sprintf("Are you sure you want want to delete %s", args[0]))
+			return util.Confirmation(fmt.Sprintf("Are you sure you want want to delete api-key %s", args[0]))
 		},
 		RunE: func(command *cobra.Command, args []string) error {
-			clusterName := args[0]
-			c.CommandOpts.Logger.Info().Msgf("Deleting cluster %s", clusterName)
+			apiKeyId := args[0]
+			c.CommandOpts.Logger.Info().Msgf("Deleting api-key %s", apiKeyId)
 
-			err := c.Client.Cluster.Delete(clusterName)
+			err := c.Client.ApiKeys.Delete(apiKeyId)
 
 			if err != nil {
 				return err
@@ -47,7 +47,7 @@ func (c *DeleteClusterCommand) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *DeleteClusterCommand) Init(client *symbiosis.Client, opts *symcommand.CommandOpts) {
+func (c *DeleteApiKeyCommand) Init(client *symbiosis.Client, opts *symcommand.CommandOpts) {
 	c.Client = client
 	c.CommandOpts = opts
 }

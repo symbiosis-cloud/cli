@@ -6,8 +6,7 @@ deploy:
      chart: ./charts/hello-world
      valuesFile: "./charts/hello-world.yaml"
      values:
-        key: "hello"
-        value: "world"
+        nameOverride: {{ Secret "example" }}
    - name: kube-state-metrics
      chart: prometheus-community/kube-state-metrics
      repository:

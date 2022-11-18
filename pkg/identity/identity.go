@@ -2,6 +2,7 @@ package identity
 
 import (
 	"encoding/base64"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"text/template"
@@ -9,6 +10,11 @@ import (
 	_ "embed"
 
 	"github.com/symbiosis-cloud/symbiosis-go"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/clientcmd"
+	clientcmdlatest "k8s.io/client-go/tools/clientcmd/api/latest"
+
+	"sigs.k8s.io/yaml"
 )
 
 type KubeConfig struct {
@@ -21,6 +27,7 @@ type KubeConfig struct {
 type ClusterIdentity struct {
 	KubeConfigPath string
 	KubeConfig     *KubeConfig
+	Output         []byte
 }
 
 //go:embed kubeconfig.tmpl
@@ -36,12 +43,13 @@ func (c *ClusterIdentity) Remove() error {
 	return nil
 }
 
-func NewClusterIdentity(client *symbiosis.Client, clusterName string, kubeConfigPath string) (*ClusterIdentity, error) {
+func NewClusterIdentity(client *symbiosis.Client, clusterName string, kubeConfigPath string, merge bool) (*ClusterIdentity, error) {
 	var outputFile *os.File
 
 	if kubeConfigPath != "" {
 
 		file, err := os.OpenFile(kubeConfigPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		defer file.Close()
 
 		if err != nil {
 			return nil, err
@@ -51,6 +59,7 @@ func NewClusterIdentity(client *symbiosis.Client, clusterName string, kubeConfig
 	} else {
 
 		file, err := ioutil.TempFile(os.TempDir(), "symbiosis")
+		defer file.Close()
 		if err != nil {
 			return nil, err
 		}
@@ -87,8 +96,38 @@ func NewClusterIdentity(client *symbiosis.Client, clusterName string, kubeConfig
 		return nil, err
 	}
 
+	output, err := os.ReadFile(outputFile.Name())
+
+	if err != nil {
+		return nil, err
+	}
+
+	if merge {
+		rules := clientcmd.NewDefaultClientConfigLoadingRules()
+		rules.Precedence = append(rules.Precedence, outputFile.Name())
+		mergedConfig, err := rules.Load()
+
+		if err != nil {
+			return nil, err
+		}
+		json, err := runtime.Encode(clientcmdlatest.Codec, mergedConfig)
+		if err != nil {
+			fmt.Printf("Unexpected error: %v", err)
+		}
+
+		mergedOutput, err := yaml.JSONToYAML(json)
+		if err != nil {
+			fmt.Printf("Unexpected error: %v", err)
+		}
+
+		output = mergedOutput
+
+		err = ioutil.WriteFile(clientcmd.RecommendedHomeFile, mergedOutput, 0644)
+	}
+
 	return &ClusterIdentity{
 		KubeConfigPath: outputFile.Name(),
 		KubeConfig:     kubeConfig,
+		Output:         output,
 	}, nil
 }

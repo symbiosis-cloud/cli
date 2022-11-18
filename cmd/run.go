@@ -6,14 +6,12 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/spf13/cobra"
-	"github.com/symbiosis-cloud/cli/cmd/run"
-	"github.com/symbiosis-cloud/cli/pkg/command"
 	"github.com/symbiosis-cloud/cli/pkg/identity"
+	"github.com/symbiosis-cloud/cli/pkg/project"
+	"github.com/symbiosis-cloud/cli/pkg/symcommand"
 	"github.com/symbiosis-cloud/cli/pkg/util"
 	"github.com/symbiosis-cloud/symbiosis-go"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,94 +26,95 @@ type RunState struct {
 
 type RunCommand struct {
 	Client      *symbiosis.Client
-	CommandOpts *command.CommandOpts
+	CommandOpts *symcommand.CommandOpts
 }
 
-func (c *RunCommand) Execute(cmd *cobra.Command, args []string) error {
-	file, err := cmd.Flags().GetString("file")
+var (
+	merge bool
+)
+
+func (c *RunCommand) Execute(command *cobra.Command, args []string) error {
+
+	deploymentFlags, err := symcommand.GetDeploymentFlags(command)
+
+	clusterName, err := command.Flags().GetString("cluster-name")
 
 	if err != nil {
 		return err
 	}
 
-	kubeConfig, err := cmd.Flags().GetString("identityOutputPath")
+	region, err := command.Flags().GetString("region")
 
 	if err != nil {
 		return err
 	}
 
-	runFile, err := run.ReadRunFile(file, c.CommandOpts)
+	c.CommandOpts.Namespace = deploymentFlags.Namespace
+
+	projectConfig, err := project.NewProjectConfig(deploymentFlags.File, c.CommandOpts, c.Client)
 
 	if err != nil {
 		return err
 	}
 
-	err = runFile.RunBuilders()
+	err = projectConfig.Parse()
 
 	if err != nil {
 		return err
 	}
 
-	// TODO: allow to set id to branch name?
-	id, err := uuid.NewUUID()
+	err = projectConfig.RunBuilders()
 
 	if err != nil {
 		return err
 	}
-	clusterName := fmt.Sprintf("run-%s", id.String())
 
-	log.Printf("Creating cluster: %s", clusterName)
+	c.CommandOpts.Logger.Info().Msgf("Creating cluster: %s", clusterName)
+
+	// TODO: allow changing node pool size
+	numNodes := 2
 
 	_, err = c.Client.Cluster.Create(&symbiosis.ClusterInput{
-		Name:              clusterName,
-		Nodes:             []symbiosis.ClusterNodeInput{},
+		Name: clusterName,
+		Nodes: []symbiosis.ClusterNodePoolInput{{
+			Name:         fmt.Sprintf("%s-autopool", clusterName),
+			NodeTypeName: "general-1", // TODO: allow changing default node type
+			Quantity:     numNodes,    // TODO: allow setting number of nodes
+			Autoscaling: symbiosis.AutoscalingSettings{
+				Enabled: true,
+				MinSize: 2,
+				MaxSize: 10,
+			}, // TODO: allow changing autoscaling
+			Labels: []symbiosis.NodeLabel{{
+				Key:   "managed-by",
+				Value: "sym-cli",
+			}},
+			Taints: []symbiosis.NodeTaint{},
+		}},
 		IsHighlyAvailable: false,
-		Region:            "germany-1", // TODO: allow setting custom region
-		KubeVersion:       "latest",    // TODO: allow setting custom kubeVersion
+		Region:            region,
+		KubeVersion:       "latest", // TODO: allow setting custom kubeVersion
 	})
 
 	if err != nil {
 		return err
 	}
 
-	log.Println("Cluster created, Creating identity...")
+	c.CommandOpts.Logger.Info().Msg("Cluster created, Creating identity...")
 
-	identity, err := identity.NewClusterIdentity(c.Client, clusterName, kubeConfig)
+	identity, err := identity.NewClusterIdentity(c.Client, clusterName, deploymentFlags.IdentityOutputPath, merge)
 
 	if err != nil {
 		return err
 	}
 
-	log.Printf("Written identity to %s\n", identity.KubeConfigPath)
+	c.CommandOpts.Logger.Info().Msgf("Written identity to %s", identity.KubeConfigPath)
 
-	runFile.SetIdentity(identity)
+	projectConfig.SetIdentity(identity)
 
 	clientset, err := util.GetKubernetesClient(identity.KubeConfigPath)
 
-	numNodes := 2
-
-	_, err = c.Client.NodePool.Create(&symbiosis.NodePoolInput{
-		Name:         fmt.Sprintf("%s-autopool", clusterName),
-		ClusterName:  clusterName,
-		NodeTypeName: "general-1", // TODO: allow changing default node type
-		Quantity:     numNodes,    // TODO: allow setting number of nodes
-		Autoscaling: symbiosis.AutoscalingSettings{
-			Enabled: true,
-			MinSize: 2,
-			MaxSize: 10,
-		}, // TODO: allow changing autoscaling
-		Labels: []symbiosis.NodeLabel{{
-			Key:   "managed-by",
-			Value: "sym-cli",
-		}},
-		Taints: []symbiosis.NodeTaint{},
-	})
-
-	if err != nil {
-		return err
-	}
-
-	log.Println("Cluster created, waiting for node pools to become active...")
+	c.CommandOpts.Logger.Info().Msg("Cluster created, waiting for node pools to become active...")
 
 	it := 0
 	for {
@@ -134,7 +133,7 @@ func (c *RunCommand) Execute(cmd *cobra.Command, args []string) error {
 			}
 		}
 
-		if numNodes == readyNodes {
+		if readyNodes > 0 {
 			break
 		}
 
@@ -142,17 +141,17 @@ func (c *RunCommand) Execute(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("Timout trying to check if new cluster is ready")
 		}
 
-		time.Sleep(time.Second * 5)
+		time.Sleep(time.Second * 10)
 		it++
 	}
 
-	log.Println("Cluster ready for use")
+	c.CommandOpts.Logger.Info().Msg("Cluster ready for use")
 
 	// run helm
-	if runFile.Deploy != nil && runFile.Deploy.Helm != nil {
-		log.Println("Installing helm chart...")
+	if projectConfig.Deploy != nil && projectConfig.Deploy.Helm != nil {
+		c.CommandOpts.Logger.Info().Msg("Installing helm chart...")
 
-		err = runFile.RunDeploy()
+		err = projectConfig.RunDeploy()
 
 		if err != nil {
 			return err
@@ -160,7 +159,7 @@ func (c *RunCommand) Execute(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	log.Println("Run finished.")
+	c.CommandOpts.Logger.Info().Msg("Run finished.")
 
 	return nil
 }
@@ -174,13 +173,15 @@ func (c *RunCommand) Command() *cobra.Command {
 		RunE:  c.Execute,
 	}
 
-	cmd.Flags().String("file", "sym.yaml", "File to use (default: sym.yaml)")
-	cmd.Flags().String("identityOutputPath", "", "Write the generated kubeConfig file to this location")
+	cmd.Flags().String("region", "germany-1", "Set the Symbiosis region")
+	cmd.Flags().String("cluster-name", fmt.Sprintf("run-%s", util.RandomString(8)), "Set the Cluster name of the newly created cluster")
+
+	symcommand.SetDeploymentFlags(cmd)
 
 	return cmd
 }
 
-func (c *RunCommand) Init(client *symbiosis.Client, opts *command.CommandOpts) {
+func (c *RunCommand) Init(client *symbiosis.Client, opts *symcommand.CommandOpts) {
 	c.Client = client
 	c.CommandOpts = opts
 }
