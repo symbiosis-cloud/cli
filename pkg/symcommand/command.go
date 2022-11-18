@@ -24,7 +24,7 @@ type Command interface {
 func Initialise(commands []Command, command *cobra.Command) error {
 
 	isAuthCmd := slices.Contains([]string{"init", "login"}, command.CalledAs())
-	debug, err := command.Flags().GetBool("debug")
+	verbose, err := command.Flags().GetBool("verbose")
 
 	if err != nil {
 		return err
@@ -91,14 +91,14 @@ func Initialise(commands []Command, command *cobra.Command) error {
 	}
 
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
-	if debug {
+	if verbose {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	}
 
 	log := zerolog.New(output).With().Timestamp().Logger()
 
 	opts := &CommandOpts{
-		Debug:   debug,
+		Verbose: verbose,
 		Project: project,
 		Logger:  log,
 	}

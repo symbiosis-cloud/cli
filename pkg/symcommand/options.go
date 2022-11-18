@@ -6,7 +6,7 @@ import (
 )
 
 type CommandOpts struct {
-	Debug     bool
+	Verbose   bool
 	Namespace string
 	Project   *symbiosis.Project
 	Logger    zerolog.Logger

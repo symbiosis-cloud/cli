@@ -22,7 +22,7 @@ var (
 	EnableBetaCommands bool
 	commands           []symcommand.Command
 	cfgFile            string
-	debug              bool
+	verbose            bool
 )
 
 // RootCmd represents the base command when called without any subcommands
@@ -58,7 +58,7 @@ func init() {
 	RootCmd.PersistentFlags().String("config", "$HOME/.symbiosis/config.yaml", "config file (default is $HOME/.symbiosis/config.yaml)")
 	RootCmd.PersistentFlags().StringP("output", "o", "table", "Output format (table, json or yaml). Default: table")
 	RootCmd.PersistentFlags().StringP("project", "p", "", "Manually sets the project")
-	RootCmd.PersistentFlags().Bool("debug", false, "Enable debug logging")
+	RootCmd.PersistentFlags().Bool("verbose", false, "Enable verbose logging")
 	RootCmd.PersistentFlags().Bool("yes", false, "Skip manual confirmation")
 	// RootCmd.PersistentFlags().Bool("beta", false, "Enable beta features (set to --beta=true to enable)")
 

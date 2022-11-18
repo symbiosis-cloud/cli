@@ -24,6 +24,7 @@ var InfoCommands = []string{"node-types", "regions", "roles"}
 func (c *InfoCommand) Execute(command *cobra.Command, args []string) error {
 
 	if len(args) == 0 {
+		command.Help()
 		return nil
 	}
 
