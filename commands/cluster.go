@@ -1,13 +1,13 @@
 /*
 Copyright © 2022 Symbiosis
 */
-package cmd
+package commands
 
 import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/symbiosis-cloud/cli/cmd/cluster"
+	"github.com/symbiosis-cloud/cli/commands/cluster"
 	"github.com/symbiosis-cloud/cli/pkg/symcommand"
 	"github.com/symbiosis-cloud/symbiosis-go"
 )

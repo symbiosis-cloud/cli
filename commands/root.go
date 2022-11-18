@@ -1,7 +1,7 @@
 /*
 Copyright © 2022 Symbiosis Cloud
 */
-package cmd
+package commands
 
 import (
 	"fmt"

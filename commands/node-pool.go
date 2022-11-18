@@ -1,10 +1,10 @@
-package cmd
+package commands
 
 import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/symbiosis-cloud/cli/cmd/nodepool"
+	"github.com/symbiosis-cloud/cli/commands/nodepool"
 	"github.com/symbiosis-cloud/cli/pkg/symcommand"
 	"github.com/symbiosis-cloud/symbiosis-go"
 )

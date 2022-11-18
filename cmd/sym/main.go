@@ -3,8 +3,8 @@ Copyright © 2022 Symbiosis Cloud
 */
 package main
 
-import "github.com/symbiosis-cloud/cli/cmd"
+import "github.com/symbiosis-cloud/cli/commands"
 
 func main() {
-	cmd.Execute()
+	commands.Execute()
 }
