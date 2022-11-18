@@ -23,6 +23,10 @@ var InfoCommands = []string{"node-types", "regions", "roles"}
 
 func (c *InfoCommand) Execute(command *cobra.Command, args []string) error {
 
+	if len(args) == 0 {
+		return nil
+	}
+
 	if ok := slices.Contains(InfoCommands, args[0]); !ok {
 		return fmt.Errorf("Unrecognized info command: %s", args[0])
 	}

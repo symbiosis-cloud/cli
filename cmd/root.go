@@ -59,14 +59,14 @@ func init() {
 	RootCmd.PersistentFlags().StringP("output", "o", "table", "Output format (table, json or yaml). Default: table")
 	RootCmd.PersistentFlags().StringP("project", "p", "", "Manually sets the project")
 	RootCmd.PersistentFlags().Bool("debug", false, "Enable debug logging")
-	RootCmd.PersistentFlags().Bool("force", false, "Skip manual confirmation")
+	RootCmd.PersistentFlags().Bool("yes", false, "Skip manual confirmation")
 	// RootCmd.PersistentFlags().Bool("beta", false, "Enable beta features (set to --beta=true to enable)")
 
 	viper.BindPFlag("output", RootCmd.PersistentFlags().Lookup("output"))
 	viper.SetDefault("output", string(util.OUTPUT_TABLE))
 
 	viper.BindPFlag("config", RootCmd.PersistentFlags().Lookup("config"))
-	viper.BindPFlag("force", RootCmd.PersistentFlags().Lookup("force"))
+	viper.BindPFlag("yes", RootCmd.PersistentFlags().Lookup("yes"))
 
 	betaCommands := []symcommand.Command{
 		&RunCommand{},

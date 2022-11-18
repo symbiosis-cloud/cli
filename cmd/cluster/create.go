@@ -43,7 +43,7 @@ func (c *CreateClusterCommand) Command() *cobra.Command {
 		PreRunE: func(command *cobra.Command, args []string) error {
 
 			if len(args) == 0 {
-				return fmt.Errorf("Please provide a cluster name (sym cluster create <cluster name>")
+				return fmt.Errorf("Please provide a cluster name (sym cluster create <cluster name>)")
 			}
 
 			if merge {

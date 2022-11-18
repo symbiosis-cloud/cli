@@ -107,9 +107,9 @@ func NewOutput(table TableOutput, dataOutput interface{}) *Output {
 }
 
 func Confirmation(prompt string) error {
-	force := viper.GetBool("force")
+	yes := viper.GetBool("yes")
 
-	if !force {
+	if !yes {
 		prompt := promptui.Prompt{
 			Label:     prompt,
 			IsConfirm: true,

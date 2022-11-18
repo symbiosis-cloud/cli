@@ -13,7 +13,7 @@ import (
 // configCmd represents the config command
 var configCmd = &cobra.Command{
 	Use:   "config",
-	Short: "A brief description of your command",
+	Short: "General configuration for the CLI tool",
 	Long:  ``,
 	Run: func(command *cobra.Command, args []string) {
 		fmt.Println("Available commands: [init]")
