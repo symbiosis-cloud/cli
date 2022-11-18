@@ -8,6 +8,7 @@ before:
 builds:
   - env:
       - CGO_ENABLED=0
+    main: ./cmd/sym/main.go
     binary: sym
     goarm:
       - "6"
