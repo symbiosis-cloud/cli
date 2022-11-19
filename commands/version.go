@@ -2,7 +2,6 @@ package commands
 
 import (
 	"fmt"
-	"runtime/debug"
 
 	"github.com/spf13/cobra"
 	"github.com/symbiosis-cloud/cli/pkg/symcommand"
@@ -10,7 +9,7 @@ import (
 )
 
 var (
-	Version = ""
+	Version = "dev"
 )
 
 type VersionCommand struct {
@@ -42,13 +41,6 @@ func (v *VersionCommand) Execute(command *cobra.Command, args []string) {
 }
 
 func (v *VersionCommand) GetVersion() string {
-	if Version == "" {
-		buildInfos, ok := debug.ReadBuildInfo()
-		if ok && buildInfos.Main.Version != "" {
-			return buildInfos.Main.Version
-		}
-		return "v0.0.0+dev"
-	}
 	return Version
 }
 
