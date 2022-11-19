@@ -23,7 +23,7 @@ type Command interface {
 
 func Initialise(commands []Command, command *cobra.Command) error {
 
-	isAuthCmd := slices.Contains([]string{"init", "login"}, command.CalledAs())
+	isAuthCmd := slices.Contains([]string{"init", "login", "version"}, command.CalledAs())
 	verbose, err := command.Flags().GetBool("verbose")
 
 	if err != nil {
