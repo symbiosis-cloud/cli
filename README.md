@@ -12,7 +12,7 @@ brew install symbiosis-cloud/tap/cli
 
 ### Linux
 
-TODO
+curl -s https://raw.githubusercontent.com/symbiosis-cloud/cli/main/install.sh | sh
 
 ## Usage
 
@@ -51,4 +51,6 @@ Currently the CLI is in Beta. We only expose a limited number of CLI commands cu
 
 * Create node pool
 * Delete node pool
+* Describe node pool
+* List node pools
 
