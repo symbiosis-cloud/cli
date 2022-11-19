@@ -18,6 +18,10 @@ import (
 	"github.com/symbiosis-cloud/cli/pkg/util"
 )
 
+const (
+	VERSION = "v0.0.2"
+)
+
 var (
 	EnableBetaCommands bool
 	commands           []symcommand.Command
@@ -79,6 +83,7 @@ func init() {
 		&LoginCommand{},
 		&InfoCommand{},
 		&ApiKeysCommand{},
+		&VersionCommand{},
 	}
 
 	// TODO: find a way to toggle beta commands via a flag
