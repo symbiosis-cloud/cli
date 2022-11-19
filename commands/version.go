@@ -2,10 +2,15 @@ package commands
 
 import (
 	"fmt"
+	"runtime/debug"
 
 	"github.com/spf13/cobra"
 	"github.com/symbiosis-cloud/cli/pkg/symcommand"
 	"github.com/symbiosis-cloud/symbiosis-go"
+)
+
+var (
+	Version = ""
 )
 
 type VersionCommand struct {
@@ -31,11 +36,23 @@ func (n *VersionCommand) Command() *cobra.Command {
 	}
 }
 
-func (n *VersionCommand) Execute(command *cobra.Command, args []string) {
-	fmt.Printf("Symbiosis CLI version %s", VERSION)
+func (v *VersionCommand) Execute(command *cobra.Command, args []string) {
+
+	fmt.Printf("Symbiosis CLI version %s", v.GetVersion())
 }
 
-func (c *VersionCommand) Init(client *symbiosis.Client, opts *symcommand.CommandOpts) {
-	c.Client = client
-	c.CommandOpts = opts
+func (v *VersionCommand) GetVersion() string {
+	if Version == "" {
+		buildInfos, ok := debug.ReadBuildInfo()
+		if ok && buildInfos.Main.Version != "" {
+			return buildInfos.Main.Version
+		}
+		return "v0.0.0+dev"
+	}
+	return Version
+}
+
+func (v *VersionCommand) Init(client *symbiosis.Client, opts *symcommand.CommandOpts) {
+	v.Client = client
+	v.CommandOpts = opts
 }
