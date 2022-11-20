@@ -31,7 +31,7 @@ func ParseTaintsAndLabels(taints []string, labels []string) ([]symbiosis.NodeTai
 
 	for i, taint := range taints {
 
-		re := regexp.MustCompile(`([a-z0-9\-\_]+)\=([a-z0-9\-\_]+)\=(NoSchedule|NoExecute|PreferNoSchedule)`)
+		re := regexp.MustCompile(`([a-z0-9\-\_]+)\=([a-zA-Z0-9\-\_]+)\=(NoSchedule|NoExecute|PreferNoSchedule)`)
 		if ok := re.Match([]byte(taint)); !ok {
 			return nil, nil, fmt.Errorf("Taint %s could not be parsed. Format: key=value=NoSchedule. Types currently supported are: NoSchedule, NoExecute and PreferNoSchedule.", taint)
 		}
@@ -45,7 +45,7 @@ func ParseTaintsAndLabels(taints []string, labels []string) ([]symbiosis.NodeTai
 	}
 
 	for x, label := range labels {
-		re := regexp.MustCompile(`([a-z0-9\-\_]+)\=([a-z0-9\-\_]+)`)
+		re := regexp.MustCompile(`([a-z0-9\-\_]+)\=([a-zA-Z0-9\-\_]+)`)
 		if ok := re.Match([]byte(label)); !ok {
 			return nil, nil, fmt.Errorf("Label %s could not be parsed. Format: key=value", label)
 		}

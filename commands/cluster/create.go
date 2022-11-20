@@ -56,6 +56,10 @@ func (c *CreateClusterCommand) Command() *cobra.Command {
 
 			nodeTaints, nodeLabels, err := util.ParseTaintsAndLabels(taints, labels)
 
+			if err != nil {
+				return err
+			}
+
 			clusterName := args[0]
 			c.CommandOpts.Logger.Info().Msgf("Creating cluster %s", clusterName)
 
