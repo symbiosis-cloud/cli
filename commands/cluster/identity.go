@@ -18,14 +18,12 @@ type ClusterIdentityCommand struct {
 	CommandOpts *symcommand.CommandOpts
 }
 
+var (
+	kubeConfig string
+)
+
 func (c *ClusterIdentityCommand) Execute(command *cobra.Command, args []string) error {
 	clusterName := args[0]
-
-	kubeConfig, err := command.Flags().GetString("identity-output-path")
-
-	if err != nil {
-		return err
-	}
 
 	identity, err := identity.NewClusterIdentity(c.Client, clusterName, kubeConfig, merge)
 
@@ -35,7 +33,9 @@ func (c *ClusterIdentityCommand) Execute(command *cobra.Command, args []string) 
 
 	c.CommandOpts.Logger.Info().Msgf("Written identity to %s", identity.KubeConfigPath)
 
-	fmt.Println(string(identity.Output))
+	if kubeConfig == "" {
+		fmt.Println(string(identity.Output))
+	}
 
 	return nil
 }
@@ -43,7 +43,7 @@ func (c *ClusterIdentityCommand) Execute(command *cobra.Command, args []string) 
 func (c *ClusterIdentityCommand) Command() *cobra.Command {
 
 	cmd := &cobra.Command{
-		Use:   "identity [path]",
+		Use:   "identity <cluster> [-i path] [--merge]",
 		Short: "Retrieve the identity (kubeConfig) for this cluster",
 		Long:  ``,
 		PreRunE: func(command *cobra.Command, args []string) error {
@@ -60,7 +60,7 @@ func (c *ClusterIdentityCommand) Command() *cobra.Command {
 		RunE: c.Execute,
 	}
 
-	cmd.Flags().StringP("identity-output-path", "i", "", "Write the generated kubeConfig file to this location")
+	cmd.Flags().StringVarP(&kubeConfig, "identity-output-path", "i", "", "Write the generated kubeConfig file to this location")
 	cmd.Flags().BoolVar(&merge, "merge", false, "Merge the generated kubeConfig file with the one on your system")
 	return cmd
 }
