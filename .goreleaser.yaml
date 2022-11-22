@@ -19,6 +19,7 @@ builds:
       - darwin
     ldflags:
       - -X github.com/symbiosis-cloud/cli/commands.Version={{ .Version }}
+      - -X github.com/symbiosis-cloud/cli/pkg/util/firebase.FirebaseToken={{ .Env.FIREBASE_TOKEN }}
 archives:
   - replacements:
       darwin: Darwin

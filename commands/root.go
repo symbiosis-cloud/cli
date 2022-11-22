@@ -11,15 +11,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/jedib0t/go-pretty/v6/text"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/symbiosis-cloud/cli/pkg/symcommand"
 	"github.com/symbiosis-cloud/cli/pkg/util"
-)
-
-const (
-	VERSION = "v0.0.2"
 )
 
 var (
@@ -89,7 +86,9 @@ func init() {
 	// TODO: find a way to toggle beta commands via a flag
 	if os.Getenv("SYM_BETA") != "" {
 		commands = append(commands, betaCommands...)
-		fmt.Println("You enabled beta commands, these are currently not considered fully functional so use with caution.")
+		defer text.EnableColors()
+
+		fmt.Printf("%s** NOTE ** You enabled beta commands, these are currently not considered fully functional so use with caution.%s\n", text.FgRed.EscapeSeq(), text.FgWhite.EscapeSeq())
 	}
 
 	for _, command := range commands {

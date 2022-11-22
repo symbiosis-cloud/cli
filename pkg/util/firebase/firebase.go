@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -22,6 +23,10 @@ type Token struct {
 	ProjectID    string `json:"project_id"`
 }
 
+var (
+	FirebaseToken string
+)
+
 func ValidateToken() error {
 	if viper.GetString("auth.method") == "token" {
 		claims := jwt.MapClaims{}
@@ -36,10 +41,17 @@ func ValidateToken() error {
 		timeSec := time.Unix(int64(claims["exp"].(float64)), 0)
 		tokenExpired := time.Now().UTC().After(timeSec.UTC())
 
+		if FirebaseToken == "" {
+			FirebaseToken = os.Getenv("FIREBASE_TOKEN")
+			if FirebaseToken == "" {
+				return fmt.Errorf("Firebase token not set...")
+			}
+		}
+
 		// if the access token has expired we have to renew it
 		if tokenExpired {
 			payload := bytes.NewBufferString(fmt.Sprintf("grant_type=refresh_token&refresh_token=%s", viper.GetString("auth.refresh_token")))
-			res, err := http.Post("https://securetoken.googleapis.com/v1/token?key=AIzaSyBbGgIU15KOodwZXwH_e0OpKWLwt0udAz0", "application/x-www-form-urlencoded", payload)
+			res, err := http.Post("https://securetoken.googleapis.com/v1/token?key="+FirebaseToken, "application/x-www-form-urlencoded", payload)
 
 			if err != nil {
 				return err
