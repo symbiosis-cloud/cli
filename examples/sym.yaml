@@ -22,10 +22,9 @@ deploy:
       url: https://kubernetes.github.io/ingress-nginx
   kustomize:
   - path: "./k8s"
-test: # Starts
-  - deployment:
-    - name: service
-      command: "go test"
-  - image: python-3.6:latest
-    command: curl test-url
+test: # test to run
+  - image: perl:latest
+    command: perl -xxx
+  - image: perl:5.34.0
+    command: perl -Mbignum=bpi -wle print bpi(2000)
 preview: {} # Creates preview cluster on PRs

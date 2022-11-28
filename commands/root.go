@@ -15,8 +15,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/symbiosis-cloud/cli/pkg/output"
 	"github.com/symbiosis-cloud/cli/pkg/symcommand"
-	"github.com/symbiosis-cloud/cli/pkg/util"
+	"github.com/symbiosis-cloud/symbiosis-go"
 )
 
 var (
@@ -24,6 +25,7 @@ var (
 	commands           []symcommand.Command
 	cfgFile            string
 	verbose            bool
+	OutputFormat       string
 )
 
 // RootCmd represents the base command when called without any subcommands
@@ -34,6 +36,8 @@ var RootCmd = &cobra.Command{
 	SilenceUsage: true,
 	PersistentPreRunE: func(command *cobra.Command, args []string) error {
 
+		// TODO: find a better way to initialise clients. Because of these commands cannot have pre-runs
+		// probably move it to OnInitialize
 		err := symcommand.Initialise(commands, command)
 
 		if err != nil {
@@ -57,14 +61,12 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	RootCmd.PersistentFlags().String("config", "$HOME/.symbiosis/config.yaml", "config file (default is $HOME/.symbiosis/config.yaml)")
-	RootCmd.PersistentFlags().StringP("output", "o", "table", "Output format (table, json or yaml). Default: table")
 	RootCmd.PersistentFlags().StringP("project", "p", "", "Manually sets the project")
 	RootCmd.PersistentFlags().Bool("verbose", false, "Enable verbose logging")
 	RootCmd.PersistentFlags().Bool("yes", false, "Skip manual confirmation")
 	// RootCmd.PersistentFlags().Bool("beta", false, "Enable beta features (set to --beta=true to enable)")
 
-	viper.BindPFlag("output", RootCmd.PersistentFlags().Lookup("output"))
-	viper.SetDefault("output", string(util.OUTPUT_TABLE))
+	RootCmd.PersistentFlags().StringVarP(&OutputFormat, "output", "o", "table", "Output format (table, json or yaml). Default: table")
 
 	viper.BindPFlag("config", RootCmd.PersistentFlags().Lookup("config"))
 	viper.BindPFlag("yes", RootCmd.PersistentFlags().Lookup("yes"))
@@ -81,6 +83,7 @@ func init() {
 		&InfoCommand{},
 		&ApiKeysCommand{},
 		&VersionCommand{},
+		&TestCommand{},
 	}
 
 	// TODO: find a way to toggle beta commands via a flag
@@ -101,7 +104,18 @@ func init() {
 func initConfig() {
 	viper.SetConfigType("yaml")
 
+	// set global output format
+	output.OutputFormat = OutputFormat
+
 	isDefault := false
+
+	symbiosisApiUrl := symbiosis.APIEndpoint
+
+	if url := os.Getenv("SYMBIOSIS_API_URL"); url != "" {
+		symbiosisApiUrl = url
+	}
+
+	viper.Set("api_url", symbiosisApiUrl)
 
 	home, err := os.UserHomeDir()
 	if err != nil {

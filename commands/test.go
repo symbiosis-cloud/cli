@@ -4,8 +4,6 @@ Copyright © 2022 Symbiosis
 package commands
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 	"github.com/symbiosis-cloud/cli/pkg/identity"
 	"github.com/symbiosis-cloud/cli/pkg/project"
@@ -13,23 +11,20 @@ import (
 	"github.com/symbiosis-cloud/symbiosis-go"
 )
 
-type ApplyCommand struct {
+type TestCommand struct {
 	Client      *symbiosis.Client
 	CommandOpts *symcommand.CommandOpts
 }
 
-func (c *ApplyCommand) Execute(command *cobra.Command, args []string) error {
+func (c *TestCommand) Execute(command *cobra.Command, args []string) error {
 
-	if len(args) == 0 {
-		return fmt.Errorf("Please provide a cluster name (sym apply <cluster>")
+	_, err := c.Client.Cluster.Describe(args[0])
+
+	if err != nil {
+		return err
 	}
 
 	clusterName := args[0]
-	_, err := c.Client.Cluster.Describe(clusterName)
-
-	if err != nil {
-		return fmt.Errorf("Cluster %s does not exist", clusterName)
-	}
 
 	deploymentFlags, err := symcommand.GetDeploymentFlags(command)
 
@@ -39,7 +34,7 @@ func (c *ApplyCommand) Execute(command *cobra.Command, args []string) error {
 
 	c.CommandOpts.Namespace = deploymentFlags.Namespace
 
-	identity, err := identity.NewClusterIdentity(c.Client, clusterName, deploymentFlags.IdentityOutputPath, merge)
+	identity, err := identity.NewClusterIdentity(c.Client, clusterName, deploymentFlags.IdentityOutputPath, false)
 
 	if err != nil {
 		return err
@@ -59,40 +54,30 @@ func (c *ApplyCommand) Execute(command *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = projectConfig.RunBuilders()
+	err = projectConfig.RunTests()
 
 	if err != nil {
 		return err
 	}
-
-	err = projectConfig.RunDeploy()
-
-	if err != nil {
-		return err
-	}
-
-	c.CommandOpts.Logger.Info().Msg("Apply finished.")
 
 	return nil
 }
 
-func (c *ApplyCommand) Command() *cobra.Command {
+func (c *TestCommand) Command() *cobra.Command {
 
 	cmd := &cobra.Command{
-		Use:   "apply",
-		Short: "Run steps defined in sym.yaml (apply) to an existing cluster",
+		Use:   "test <cluster>",
+		Short: "Run test steps defined in sym.yaml",
 		Long:  ``,
 		RunE:  c.Execute,
 	}
-
-	cmd.Flags().BoolVar(&merge, "merge", false, "Merge the generated kubeConfig file with the one on your system")
 
 	symcommand.SetDeploymentFlags(cmd)
 
 	return cmd
 }
 
-func (c *ApplyCommand) Init(client *symbiosis.Client, opts *symcommand.CommandOpts) {
+func (c *TestCommand) Init(client *symbiosis.Client, opts *symcommand.CommandOpts) {
 	c.Client = client
 	c.CommandOpts = opts
 }

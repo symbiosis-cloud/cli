@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -21,6 +20,11 @@ type Token struct {
 	IDToken      string `json:"id_token"`
 	UserID       string `json:"user_id"`
 	ProjectID    string `json:"project_id"`
+}
+
+type RefreshTokenInput struct {
+	GrantType    string `json:"grantType"`
+	RefreshToken string `json:"refreshToken"`
 }
 
 var (
@@ -41,17 +45,19 @@ func ValidateToken() error {
 		timeSec := time.Unix(int64(claims["exp"].(float64)), 0)
 		tokenExpired := time.Now().UTC().After(timeSec.UTC())
 
-		if FirebaseToken == "" {
-			FirebaseToken = os.Getenv("FIREBASE_TOKEN")
-			if FirebaseToken == "" {
-				return fmt.Errorf("Firebase token not set...")
-			}
-		}
+		refreshToken := viper.GetString("auth.refresh_token")
+		apiEndpoint := viper.GetString("api_url")
 
 		// if the access token has expired we have to renew it
 		if tokenExpired {
-			payload := bytes.NewBufferString(fmt.Sprintf("grant_type=refresh_token&refresh_token=%s", viper.GetString("auth.refresh_token")))
-			res, err := http.Post("https://securetoken.googleapis.com/v1/token?key="+FirebaseToken, "application/x-www-form-urlencoded", payload)
+
+			payload, err := json.Marshal(RefreshTokenInput{"refresh_token", refreshToken})
+
+			if err != nil {
+				return err
+			}
+
+			res, err := http.Post(fmt.Sprintf("%s/rest/v1/firebase/refresh-token", apiEndpoint), "application/json", bytes.NewBuffer(payload))
 
 			if err != nil {
 				return err

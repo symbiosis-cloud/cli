@@ -8,8 +8,8 @@ import (
 
 	"github.com/jedib0t/go-pretty/v6/text"
 	"github.com/spf13/cobra"
+	"github.com/symbiosis-cloud/cli/pkg/output"
 	"github.com/symbiosis-cloud/cli/pkg/symcommand"
-	"github.com/symbiosis-cloud/cli/pkg/util"
 	"github.com/symbiosis-cloud/symbiosis-go"
 )
 
@@ -55,7 +55,7 @@ func (c *CreateApiKeyCommand) Command() *cobra.Command {
 
 			c.CommandOpts.Logger.Info().Msgf("%s** NOTE ** This token will not be shown again.%s", text.FgRed.EscapeSeq(), text.FgWhite.EscapeSeq())
 
-			err = util.NewOutput(util.TableOutput{
+			err = output.NewOutput(output.TableOutput{
 				Headers: []string{"ID", "Description", "Token", "Role"},
 				Data:    [][]interface{}{{apiKey.ID, apiKey.Description, apiKey.Token, apiKey.Role}},
 			},

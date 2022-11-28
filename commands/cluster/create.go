@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/symbiosis-cloud/cli/pkg/identity"
+	"github.com/symbiosis-cloud/cli/pkg/output"
 	"github.com/symbiosis-cloud/cli/pkg/symcommand"
 	"github.com/symbiosis-cloud/cli/pkg/util"
 	"github.com/symbiosis-cloud/symbiosis-go"
@@ -47,7 +48,7 @@ func (c *CreateClusterCommand) Command() *cobra.Command {
 			}
 
 			if merge {
-				return util.Confirmation("Are you sure you want to merge the new config with your existing .kube/config file")
+				return output.Confirmation("Are you sure you want to merge the new config with your existing .kube/config file")
 			}
 
 			return nil
@@ -116,7 +117,7 @@ func (c *CreateClusterCommand) Command() *cobra.Command {
 
 			}
 
-			err = util.NewOutput(util.TableOutput{
+			err = output.NewOutput(output.TableOutput{
 				Headers: []string{"ID", "Name", "Version", "Node type", "# Nodes"},
 				Data:    [][]interface{}{{cluster.ID, cluster.Name, cluster.KubeVersion, nodeType, nodeCount}},
 			},

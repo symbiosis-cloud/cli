@@ -73,6 +73,7 @@ func (b *HelmBuilder) Build() error {
 }
 
 func (b *HelmBuilder) Deploy() error {
+	b.CommandOpts.Logger.Info().Msg("Using Helm for deployment")
 	w := new(errgroup.Group)
 
 	for _, d := range b.deployments {
@@ -99,7 +100,6 @@ func (b *HelmBuilder) Deploy() error {
 }
 
 func (b *HelmBuilder) Install(d HelmDeployment) error {
-
 	b.CommandOpts.Logger.Info().Msgf("Installing Helm chart %s", d.Name)
 	kubeConfig := b.GetIdentity().KubeConfigPath
 
@@ -204,11 +204,11 @@ func (b *HelmBuilder) expandPaths(path string) string {
 	return path
 }
 
-func NewHelmBuilder(deployments []HelmDeployment, dir string, opts *symcommand.CommandOpts) *HelmBuilder {
-	opts.Logger.Info().Msg("Using Helm for deployment")
+func NewHelmBuilder(deployments []HelmDeployment, dir string, opts *symcommand.CommandOpts, identity *identity.ClusterIdentity) *HelmBuilder {
 	return &HelmBuilder{
 		deployments: deployments,
 		dir:         dir,
 		CommandOpts: opts,
+		identity:    identity,
 	}
 }

@@ -9,13 +9,17 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"strings"
 
 	"github.com/manifoldco/promptui"
 	"github.com/symbiosis-cloud/cli/pkg/builder"
 	"github.com/symbiosis-cloud/cli/pkg/identity"
 	"github.com/symbiosis-cloud/cli/pkg/symcommand"
+	"github.com/symbiosis-cloud/cli/pkg/testing"
+	"github.com/symbiosis-cloud/cli/pkg/util"
 	"github.com/symbiosis-cloud/symbiosis-go"
 	"gopkg.in/yaml.v2"
+	"k8s.io/client-go/kubernetes"
 )
 
 type Deployment struct {
@@ -25,26 +29,27 @@ type Deployment struct {
 	} `yaml:"kustomize,omitempty"`
 }
 
+type Test struct {
+	Image   string `yaml:"image,omitempty"`
+	Command string `yaml:"command,omitempty"`
+}
+
 type ProjectConfig struct {
 	Project *symbiosis.Project
 	Deploy  *Deployment `yaml:"deploy"`
-	Test    []struct {
-		Deployment []struct {
-			Name    string `yaml:"name"`
-			Command string `yaml:"command"`
-		} `yaml:"deployment,omitempty"`
-		Image   string `yaml:"image,omitempty"`
-		Command string `yaml:"command,omitempty"`
-	} `yaml:"test,omitempty"`
+	Test    []Test      `yaml:"test,omitempty"`
 	Preview struct {
 	} `yaml:"preview"`
 
 	builders        []builder.Builder
+	TestRunner      *testing.TestRunner
 	Path            string
 	rawConfig       []byte
 	client          *symbiosis.Client
 	commandOpts     *symcommand.CommandOpts
 	ProjectFilePath string
+	identity        *identity.ClusterIdentity
+	Clientset       *kubernetes.Clientset
 }
 
 func (p *ProjectConfig) Parse() error {
@@ -91,8 +96,26 @@ func (p *ProjectConfig) Parse() error {
 	}
 
 	if p.Deploy.Helm != nil {
-		helm := builder.NewHelmBuilder(p.Deploy.Helm, filepath.Dir(p.Path), p.commandOpts)
+		helm := builder.NewHelmBuilder(p.Deploy.Helm, filepath.Dir(p.Path), p.commandOpts, p.identity)
+
 		p.builders = append(p.builders, helm)
+	}
+
+	if p.Test != nil {
+		if len(p.Test) == 0 {
+			return fmt.Errorf("No tests given")
+		}
+
+		jobs := make([]*testing.TestJob, len(p.Test))
+		for i, test := range p.Test {
+			jobs[i] = testing.NewTestJob(test.Image, strings.Split(test.Command, " "))
+		}
+
+		p.TestRunner, err = testing.NewTestRunner(jobs, p.Clientset, p.commandOpts)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	// store the raw config for further processing
@@ -101,10 +124,8 @@ func (p *ProjectConfig) Parse() error {
 	return nil
 }
 
-func (p *ProjectConfig) SetIdentity(identity *identity.ClusterIdentity) {
-	for _, builder := range p.builders {
-		builder.SetIdentity(identity)
-	}
+func (p *ProjectConfig) RunTests() error {
+	return p.TestRunner.Run()
 }
 
 func (p *ProjectConfig) RunBuilders() error {
@@ -183,10 +204,16 @@ func (p *ProjectConfig) PromptProject(path string) (*symbiosis.Project, error) {
 	return project, nil
 }
 
-func NewProjectConfig(file string, opts *symcommand.CommandOpts, client *symbiosis.Client) (*ProjectConfig, error) {
+func NewProjectConfig(file string, opts *symcommand.CommandOpts, client *symbiosis.Client, identity *identity.ClusterIdentity) (*ProjectConfig, error) {
 	filePath, err := filepath.Abs(file)
 
 	dir, err := os.Getwd()
+
+	if err != nil {
+		return nil, err
+	}
+
+	clientset, err := util.GetKubernetesClient(identity.KubeConfigPath)
 
 	if err != nil {
 		return nil, err
@@ -196,8 +223,10 @@ func NewProjectConfig(file string, opts *symcommand.CommandOpts, client *symbios
 
 	projectConfig := &ProjectConfig{
 		Path:        filePath,
+		Clientset:   clientset,
 		client:      client,
 		commandOpts: opts,
+		identity:    identity,
 	}
 
 	if opts.Project != nil {

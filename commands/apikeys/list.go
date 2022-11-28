@@ -5,8 +5,8 @@ package apikeys
 
 import (
 	"github.com/spf13/cobra"
+	"github.com/symbiosis-cloud/cli/pkg/output"
 	"github.com/symbiosis-cloud/cli/pkg/symcommand"
-	"github.com/symbiosis-cloud/cli/pkg/util"
 	"github.com/symbiosis-cloud/symbiosis-go"
 )
 
@@ -29,7 +29,7 @@ func (c *ListApiKeysCommand) Execute(command *cobra.Command, args []string) erro
 		data = append(data, []interface{}{apiKey.ID, apiKey.Description, apiKey.Token, apiKey.Role})
 	}
 
-	err = util.NewOutput(util.TableOutput{
+	err = output.NewOutput(output.TableOutput{
 		Headers: []string{"ID", "Description", "Token", "Role"},
 		Data:    data,
 	},
