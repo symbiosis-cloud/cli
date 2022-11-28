@@ -291,6 +291,8 @@ func (j *TestJob) Run(
 			j.result.Duration = time.Now().Sub(j.executionStart)
 			j.result.Write()
 		}
-		time.Sleep(5)
+
+		// avoid spamming the k8s API
+		time.Sleep(time.Second * 1)
 	}
 }
