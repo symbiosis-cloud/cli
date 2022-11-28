@@ -51,7 +51,15 @@ func (c *RunCommand) Execute(command *cobra.Command, args []string) error {
 
 	c.CommandOpts.Namespace = deploymentFlags.Namespace
 
-	projectConfig, err := project.NewProjectConfig(deploymentFlags.File, c.CommandOpts, c.Client)
+	identity, err := identity.NewClusterIdentity(c.Client, clusterName, deploymentFlags.IdentityOutputPath, merge)
+
+	if err != nil {
+		return err
+	}
+
+	c.CommandOpts.Logger.Info().Msgf("Written identity to %s", identity.KubeConfigPath)
+
+	projectConfig, err := project.NewProjectConfig(deploymentFlags.File, c.CommandOpts, c.Client, identity)
 
 	if err != nil {
 		return err
@@ -102,18 +110,6 @@ func (c *RunCommand) Execute(command *cobra.Command, args []string) error {
 
 	c.CommandOpts.Logger.Info().Msg("Cluster created, Creating identity...")
 
-	identity, err := identity.NewClusterIdentity(c.Client, clusterName, deploymentFlags.IdentityOutputPath, merge)
-
-	if err != nil {
-		return err
-	}
-
-	c.CommandOpts.Logger.Info().Msgf("Written identity to %s", identity.KubeConfigPath)
-
-	projectConfig.SetIdentity(identity)
-
-	clientset, err := util.GetKubernetesClient(identity.KubeConfigPath)
-
 	c.CommandOpts.Logger.Info().Msg("Cluster created, waiting for node pools to become active...")
 
 	it := 0
@@ -121,7 +117,7 @@ func (c *RunCommand) Execute(command *cobra.Command, args []string) error {
 
 		readyNodes := 0
 
-		nodes, _ := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+		nodes, _ := projectConfig.Clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 
 		for _, node := range nodes.Items {
 		inner:
@@ -175,6 +171,7 @@ func (c *RunCommand) Command() *cobra.Command {
 
 	cmd.Flags().String("region", "germany-1", "Set the Symbiosis region")
 	cmd.Flags().String("cluster-name", fmt.Sprintf("run-%s", util.RandomString(8)), "Set the Cluster name of the newly created cluster")
+	cmd.Flags().String("identity-output-path", "", "Write the generated kubeConfig file to this location")
 
 	symcommand.SetDeploymentFlags(cmd)
 

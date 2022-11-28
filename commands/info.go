@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/symbiosis-cloud/cli/pkg/output"
 	"github.com/symbiosis-cloud/cli/pkg/symcommand"
-	"github.com/symbiosis-cloud/cli/pkg/util"
 	"github.com/symbiosis-cloud/symbiosis-go"
 	"k8s.io/utils/strings/slices"
 )
@@ -77,7 +77,7 @@ func (c *InfoCommand) printNodeTypes() error {
 		data = append(data, []interface{}{nodeType.ID, nodeType.Name, nodeType.Vcpu, nodeType.MemoryMi})
 	}
 
-	err = util.NewOutput(util.TableOutput{
+	err = output.NewOutput(output.TableOutput{
 		Headers: []string{"ID", "Name", "vCPU", "Memory"},
 		Data:    data,
 	},
@@ -105,8 +105,8 @@ func (c *InfoCommand) printRegions() error {
 		data = append(data, []interface{}{region.ID, region.Name})
 	}
 
-	err = util.NewOutput(
-		util.TableOutput{
+	err = output.NewOutput(
+		output.TableOutput{
 			Headers: []string{"ID", "Name"},
 			Data:    data,
 		},
@@ -130,8 +130,8 @@ func (c *InfoCommand) printRoles() error {
 		data = append(data, []interface{}{role, valid})
 	}
 
-	err := util.NewOutput(
-		util.TableOutput{
+	err := output.NewOutput(
+		output.TableOutput{
 			Headers: []string{"Role", "Valid"},
 			Data:    data,
 		},

@@ -1,4 +1,4 @@
-package util
+package output
 
 import (
 	"encoding/json"
@@ -36,17 +36,19 @@ func (o *Output) AddSubHeaders(headers []string) {
 	o.Table.SubHeaders = headers
 }
 
+var (
+	OutputFormat string
+)
+
 func (o *Output) VariableOutput() error {
 
-	outputType := viper.GetString("output")
-
-	if !slices.Contains([]string{string(OUTPUT_TABLE), string(OUTPUT_JSON), string(OUTPUT_YAML)}, outputType) {
-		return fmt.Errorf("%s is not a valid output format", outputType)
+	if !slices.Contains([]string{string(OUTPUT_TABLE), string(OUTPUT_JSON), string(OUTPUT_YAML)}, OutputFormat) {
+		return fmt.Errorf("%s is not a valid output format", OutputFormat)
 	}
 
 	rowConfigAutoMerge := table.RowConfig{AutoMerge: true}
 
-	if outputType == "table" {
+	if OutputFormat == "table" {
 		t := table.NewWriter()
 		t.SetStyle(table.StyleLight)
 
@@ -81,7 +83,7 @@ func (o *Output) VariableOutput() error {
 		}
 
 		t.Render()
-	} else if outputType == "json" {
+	} else if OutputFormat == "json" {
 		jsonOutput, err := json.MarshalIndent(o.DataOutput, "", "  ")
 
 		if err != nil {
@@ -89,7 +91,7 @@ func (o *Output) VariableOutput() error {
 		}
 
 		fmt.Println(string(jsonOutput))
-	} else if outputType == "yaml" {
+	} else if OutputFormat == "yaml" {
 		yamlOutput, err := yaml.Marshal(o.DataOutput)
 
 		if err != nil {
@@ -103,6 +105,7 @@ func (o *Output) VariableOutput() error {
 }
 
 func NewOutput(table TableOutput, dataOutput interface{}) *Output {
+
 	return &Output{table, dataOutput}
 }
 

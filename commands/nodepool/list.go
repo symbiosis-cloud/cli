@@ -7,8 +7,8 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/symbiosis-cloud/cli/pkg/output"
 	"github.com/symbiosis-cloud/cli/pkg/symcommand"
-	"github.com/symbiosis-cloud/cli/pkg/util"
 	"github.com/symbiosis-cloud/symbiosis-go"
 )
 
@@ -72,7 +72,7 @@ func nodePoolOutput(nodepools []*symbiosis.NodePool, isSingular bool) error {
 		dataOutput = nodepools[0]
 	}
 
-	err := util.NewOutput(util.TableOutput{
+	err := output.NewOutput(output.TableOutput{
 		Headers: []string{"ID", "Name", "Type", "# Nodes", "Autoscaling", "Min nodes", "Nax nodes"},
 		Data:    data,
 	},

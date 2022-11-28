@@ -7,8 +7,8 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/symbiosis-cloud/cli/pkg/output"
 	"github.com/symbiosis-cloud/cli/pkg/symcommand"
-	"github.com/symbiosis-cloud/cli/pkg/util"
 	"github.com/symbiosis-cloud/symbiosis-go"
 )
 
@@ -28,7 +28,7 @@ func (c *DeleteNodePoolCommand) Command() *cobra.Command {
 				return fmt.Errorf("Please provide a cluster name (sym node-pool delete <nodePoolId>")
 			}
 
-			return util.Confirmation(fmt.Sprintf("Are you sure you want want to delete node-pool with ID %s", args[0]))
+			return output.Confirmation(fmt.Sprintf("Are you sure you want want to delete node-pool with ID %s", args[0]))
 		},
 		RunE: func(command *cobra.Command, args []string) error {
 			nodePoolId := args[0]

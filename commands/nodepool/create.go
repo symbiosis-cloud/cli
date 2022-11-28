@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/symbiosis-cloud/cli/pkg/output"
 	"github.com/symbiosis-cloud/cli/pkg/symcommand"
 	"github.com/symbiosis-cloud/cli/pkg/util"
 	"github.com/symbiosis-cloud/symbiosis-go"
@@ -93,7 +94,7 @@ func (c *CreateNodePoolCommand) Command() *cobra.Command {
 
 			c.CommandOpts.Logger.Info().Msgf("Node-pool %s created.", nodePool.Name)
 
-			err = util.NewOutput(util.TableOutput{
+			err = output.NewOutput(output.TableOutput{
 				Headers: []string{"ID", "Name", "Type", "Quantity"},
 				Data:    [][]interface{}{{nodePool.ID, nodePool.Name, nodeType, nodeCount}},
 			},
