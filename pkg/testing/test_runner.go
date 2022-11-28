@@ -3,8 +3,11 @@ package testing
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"path"
 	"time"
 
 	"github.com/symbiosis-cloud/cli/pkg/identity"
@@ -31,30 +34,30 @@ type TestJob struct {
 }
 
 type TestResult struct {
-	Image    string    `json:"image"`
-	Commands []string  `json:"commands"`
-	State    TestState `json:"state"`
-	ExitCode int32     `json:"exitCode"`
-	Logs     string    `json:"logs"`
+	Name     string        `json:"name"`
+	Image    string        `json:"image"`
+	Commands []string      `json:"commands"`
+	State    TestState     `json:"state"`
+	ExitCode int32         `json:"exitCode"`
+	Logs     string        `json:"logs"`
+	Duration time.Duration `json:"duration"`
 }
 
 type TestRunner struct {
-	jobs []*TestJob
-
-	identity  *identity.ClusterIdentity
-	clientSet *kubernetes.Clientset
-
+	jobs        []*TestJob
+	identity    *identity.ClusterIdentity
+	clientSet   *kubernetes.Clientset
 	CommandOpts *symcommand.CommandOpts
 }
 
-func (t *TestRunner) Run() error {
+func (t *TestRunner) Run(testOutputDir string) error {
 
 	t.CommandOpts.Logger.Info().Msgf("Running %d tests...", len(t.jobs))
 
 	// TODO: make timeouts configurable
 	ctx, cancel := context.WithTimeout(context.TODO(), time.Minute*30)
 
-	var results []*TestResult
+	results := make([]*TestResult, len(t.jobs))
 
 	defer cancel()
 
@@ -67,6 +70,18 @@ func (t *TestRunner) Run() error {
 
 		podName := fmt.Sprintf("test-job-%d", i)
 		deletePods = append(deletePods, podName)
+		results[i] = &TestResult{
+			Name:     fmt.Sprintf("test-%d", i),
+			Image:    job.Image,
+			Commands: job.Commands,
+			State:    TEST_STATE_PENDING,
+		}
+
+		err := results[i].Write(testOutputDir)
+
+		if err != nil {
+			return err
+		}
 
 		podSpec := &v1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
@@ -85,12 +100,13 @@ func (t *TestRunner) Run() error {
 			},
 		}
 
-		runningJob := job
+		num := i
+		executionStart := time.Now()
 
 		errGroup.Go(func() error {
 			_, err := podsApi.Create(ctx, podSpec, metav1.CreateOptions{})
 			if err != nil {
-				return fmt.Errorf("Failed to create pod for test %d", i)
+				return fmt.Errorf("Failed to create pod for test %d", num)
 			}
 
 			result := make(chan *TestResult, 1)
@@ -102,6 +118,8 @@ func (t *TestRunner) Run() error {
 			quit := make(chan bool)
 
 			for {
+
+				testResult := results[num]
 
 				go func() {
 
@@ -148,25 +166,31 @@ func (t *TestRunner) Run() error {
 										state = TEST_STATE_FAILED
 									}
 
-									result <- &TestResult{
-										Image:    runningJob.Image,
-										Commands: runningJob.Commands,
-										State:    state,
-										ExitCode: x.State.Terminated.ExitCode,
-										Logs:     logs,
-									}
+									testResult.State = state
+									testResult.ExitCode = x.State.Terminated.ExitCode
+									testResult.Logs = logs
+									testResult.Duration = time.Now().Sub(executionStart)
+
+									result <- testResult
 									quit <- true
 								}
 							}
 
-							time.Sleep(5)
+							testResult.Duration = time.Now().Sub(executionStart)
+							testResult.Write(testOutputDir)
 						}
+						time.Sleep(5)
 					}
 				}()
 
 				select {
 				case res := <-result:
-					results = append(results, res)
+					results[num] = res
+					err := res.Write(testOutputDir)
+
+					if err != nil {
+						return err
+					}
 					return nil
 				case err := <-errchan:
 					return err
@@ -199,11 +223,11 @@ func (t *TestRunner) Run() error {
 	var data [][]interface{}
 
 	for _, result := range results {
-		data = append(data, []interface{}{result.Image, result.Commands, result.State, result.ExitCode})
+		data = append(data, []interface{}{result.Image, result.Commands, result.State, result.ExitCode, fmt.Sprintf("%s", result.Duration.Round(time.Second).String())})
 	}
 
 	err = output.NewOutput(output.TableOutput{
-		Headers: []string{"Test image", "Command", "State", "Exit code"},
+		Headers: []string{"Test image", "Command", "State", "Exit code", "Duration"},
 		Data:    data,
 	},
 		results,
@@ -227,4 +251,31 @@ func NewTestRunner(jobs []*TestJob, clientSet *kubernetes.Clientset, opts *symco
 
 func NewTestJob(image string, commands []string) *TestJob {
 	return &TestJob{image, commands, TEST_STATE_PENDING}
+}
+
+func (t *TestResult) MarshalJSON() (b []byte, err error) {
+	type Alias TestResult
+	return json.Marshal(&struct {
+		Duration string `json:"duration"`
+		*Alias
+	}{
+		Duration: fmt.Sprintf("%s", t.Duration.Round(time.Second).String()),
+		Alias:    (*Alias)(t),
+	})
+}
+
+func (t *TestResult) Write(testOutputDir string) error {
+	data, err := json.MarshalIndent(t, "", "  ")
+
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(path.Join(testOutputDir, fmt.Sprintf("%s.json", t.Name)), data, 0644)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

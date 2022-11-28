@@ -124,8 +124,8 @@ func (p *ProjectConfig) Parse() error {
 	return nil
 }
 
-func (p *ProjectConfig) RunTests() error {
-	return p.TestRunner.Run()
+func (p *ProjectConfig) RunTests(testOutputDir string) error {
+	return p.TestRunner.Run(testOutputDir)
 }
 
 func (p *ProjectConfig) RunBuilders() error {

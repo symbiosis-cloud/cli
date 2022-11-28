@@ -4,6 +4,8 @@ Copyright © 2022 Symbiosis
 package commands
 
 import (
+	"os"
+
 	"github.com/spf13/cobra"
 	"github.com/symbiosis-cloud/cli/pkg/identity"
 	"github.com/symbiosis-cloud/cli/pkg/project"
@@ -15,6 +17,10 @@ type TestCommand struct {
 	Client      *symbiosis.Client
 	CommandOpts *symcommand.CommandOpts
 }
+
+var (
+	testOutputDir string
+)
 
 func (c *TestCommand) Execute(command *cobra.Command, args []string) error {
 
@@ -54,7 +60,7 @@ func (c *TestCommand) Execute(command *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = projectConfig.RunTests()
+	err = projectConfig.RunTests(testOutputDir)
 
 	if err != nil {
 		return err
@@ -72,6 +78,7 @@ func (c *TestCommand) Command() *cobra.Command {
 		RunE:  c.Execute,
 	}
 
+	cmd.PersistentFlags().StringVar(&testOutputDir, "test-output-dir", os.TempDir(), "Output directory for test results. Default: temporary directory.")
 	symcommand.SetDeploymentFlags(cmd)
 
 	return cmd
