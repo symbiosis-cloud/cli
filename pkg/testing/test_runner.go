@@ -46,7 +46,7 @@ type TestResult struct {
 	State     TestState     `json:"state"`
 	ExitCode  int32         `json:"exitCode"`
 	Logs      string        `json:"logs"`
-	Duration  time.Duration `json:"duration"`
+	Duration  time.Duration `json:"duration_s"`
 	outputDir string
 }
 
@@ -174,8 +174,9 @@ func (t *TestRunner) Run(testOutputDir string) error {
 
 	var data [][]interface{}
 
-	for _, job := range t.jobs {
+	for i, job := range t.jobs {
 		data = append(data, []interface{}{job.result.Image, job.result.Commands, job.result.State, job.result.ExitCode, fmt.Sprintf("%s", job.result.Duration.Round(time.Second).String())})
+		results[i] = job.result
 	}
 
 	err = output.NewOutput(output.TableOutput{
@@ -205,13 +206,14 @@ func NewTestJob(image string, commands []string) *TestJob {
 	return &TestJob{image, commands, TEST_STATE_PENDING, nil, time.Now(), nil, nil, nil}
 }
 
+// make sure we format duration as float of seconds
 func (t *TestResult) MarshalJSON() (b []byte, err error) {
 	type Alias TestResult
 	return json.Marshal(&struct {
-		Duration string `json:"duration"`
+		Duration float64 `json:"duration_s"`
 		*Alias
 	}{
-		Duration: fmt.Sprintf("%s", t.Duration.Round(time.Second).String()),
+		Duration: t.Duration.Seconds(),
 		Alias:    (*Alias)(t),
 	})
 }
