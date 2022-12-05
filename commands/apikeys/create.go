@@ -21,12 +21,12 @@ type CreateApiKeyCommand struct {
 func (c *CreateApiKeyCommand) Command() *cobra.Command {
 
 	cmd := &cobra.Command{
-		Use:   "create <role> <description>",
-		Short: "Create an API key",
+		Use:   "create <role> [description]",
+		Short: "Create an API key. You can use 'sym info roles' to retrieve a list of valid API key roles.",
 		Long:  ``,
 		PreRunE: func(command *cobra.Command, args []string) error {
-			if len(args) < 2 {
-				return fmt.Errorf("Please provide an API key name and description (sym api-key create <name> <description>")
+			if len(args) < 1 {
+				return fmt.Errorf("Please provide at least an API key name. Description is optional. (sym api-key create <role> [description]")
 			}
 
 			role := args[0]
@@ -41,7 +41,11 @@ func (c *CreateApiKeyCommand) Command() *cobra.Command {
 		RunE: func(command *cobra.Command, args []string) error {
 
 			role := args[0]
-			description := args[1]
+
+			description := ""
+			if len(args) == 2 {
+				description = args[1]
+			}
 
 			apiKey, err := c.Client.ApiKeys.Create(symbiosis.ApiKeyInput{
 				Description: description,
