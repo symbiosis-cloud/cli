@@ -125,6 +125,11 @@ func (p *ProjectConfig) Parse() error {
 }
 
 func (p *ProjectConfig) RunTests(testOutputDir string) error {
+	if p.TestRunner == nil {
+		p.commandOpts.Logger.Info().Msg("No tests to run")
+		return nil
+	}
+
 	return p.TestRunner.Run(testOutputDir)
 }
 
