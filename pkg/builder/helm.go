@@ -204,11 +204,10 @@ func (b *HelmBuilder) expandPaths(path string) string {
 	return path
 }
 
-func NewHelmBuilder(deployments []HelmDeployment, dir string, opts *symcommand.CommandOpts, identity *identity.ClusterIdentity) *HelmBuilder {
+func NewHelmBuilder(deployments []HelmDeployment, dir string, opts *symcommand.CommandOpts) *HelmBuilder {
 	return &HelmBuilder{
 		deployments: deployments,
 		dir:         dir,
 		CommandOpts: opts,
-		identity:    identity,
 	}
 }

@@ -96,7 +96,7 @@ func (p *ProjectConfig) Parse() error {
 	}
 
 	if p.Deploy.Helm != nil {
-		helm := builder.NewHelmBuilder(p.Deploy.Helm, filepath.Dir(p.Path), p.commandOpts, p.identity)
+		helm := builder.NewHelmBuilder(p.Deploy.Helm, filepath.Dir(p.Path), p.commandOpts)
 
 		p.builders = append(p.builders, helm)
 	}
@@ -120,6 +120,11 @@ func (p *ProjectConfig) Parse() error {
 
 	// store the raw config for further processing
 	p.rawConfig = f
+
+	// update identity for all configured builders
+	if p.identity != nil {
+		p.SetIdentity(p.identity)
+	}
 
 	return nil
 }
@@ -209,6 +214,16 @@ func (p *ProjectConfig) PromptProject(path string) (*symbiosis.Project, error) {
 	return project, nil
 }
 
+func (p *ProjectConfig) SetIdentity(identity *identity.ClusterIdentity) {
+	p.identity = identity
+
+	if len(p.builders) > 0 {
+		for _, builder := range p.builders {
+			builder.SetIdentity(identity)
+		}
+	}
+}
+
 func NewProjectConfig(file string, opts *symcommand.CommandOpts, client *symbiosis.Client, identity *identity.ClusterIdentity) (*ProjectConfig, error) {
 	filePath, err := filepath.Abs(file)
 
@@ -218,10 +233,17 @@ func NewProjectConfig(file string, opts *symcommand.CommandOpts, client *symbios
 		return nil, err
 	}
 
-	clientset, err := util.GetKubernetesClient(identity.KubeConfigPath)
+	var clientset *kubernetes.Clientset
 
-	if err != nil {
-		return nil, err
+	if identity != nil {
+
+		cs, err := util.GetKubernetesClient(identity.KubeConfigPath)
+
+		if err != nil {
+			return nil, err
+		}
+
+		clientset = cs
 	}
 
 	var project *symbiosis.Project
