@@ -34,8 +34,12 @@ type Test struct {
 	Command string `yaml:"command,omitempty"`
 }
 
+type Project struct {
+	Name string `json:"name"`
+}
+
 type ProjectConfig struct {
-	Project *symbiosis.Project
+	Project *Project
 	Deploy  *Deployment `yaml:"deploy"`
 	Test    []Test      `yaml:"test,omitempty"`
 	Preview struct {
@@ -88,7 +92,7 @@ func (p *ProjectConfig) Parse() error {
 	err = yaml.Unmarshal(parsedFile.Bytes(), &p)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to parse sym.yaml: %v", err)
 	}
 
 	if p.Deploy == nil {
@@ -162,7 +166,7 @@ func (p *ProjectConfig) RunDeploy() error {
 	return nil
 }
 
-func (p *ProjectConfig) PromptProject(path string) (*symbiosis.Project, error) {
+func (p *ProjectConfig) PromptProject(path string) (*Project, error) {
 
 	projects, err := p.client.Project.List()
 
@@ -199,7 +203,9 @@ func (p *ProjectConfig) PromptProject(path string) (*symbiosis.Project, error) {
 	file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	defer file.Close()
 
-	output, err := json.Marshal(project)
+	selectedProject := &Project{project.Name}
+
+	output, err := json.Marshal(selectedProject)
 
 	if err != nil {
 		return nil, err
@@ -211,7 +217,7 @@ func (p *ProjectConfig) PromptProject(path string) (*symbiosis.Project, error) {
 		return nil, err
 	}
 
-	return project, nil
+	return selectedProject, nil
 }
 
 func (p *ProjectConfig) SetIdentity(identity *identity.ClusterIdentity) {
@@ -246,8 +252,7 @@ func NewProjectConfig(file string, opts *symcommand.CommandOpts, client *symbios
 		clientset = cs
 	}
 
-	var project *symbiosis.Project
-
+	var project *Project
 	projectConfig := &ProjectConfig{
 		Path:        filePath,
 		Clientset:   clientset,
@@ -256,31 +261,26 @@ func NewProjectConfig(file string, opts *symcommand.CommandOpts, client *symbios
 		identity:    identity,
 	}
 
-	if opts.Project != nil {
-		project = opts.Project
-	} else {
-		projectFilePath := path.Join(dir, ".symbiosis.project")
-		projectConfig.ProjectFilePath = projectFilePath
+	projectFilePath := path.Join(dir, ".symbiosis.project")
+	projectConfig.ProjectFilePath = projectFilePath
 
-		projectFile, err := os.ReadFile(projectFilePath)
+	projectFile, err := os.ReadFile(projectFilePath)
 
-		if err != nil && !os.IsNotExist(err) {
+	if err != nil && !os.IsNotExist(err) {
+		return nil, err
+	} else if err != nil && os.IsNotExist(err) {
+		p, err := projectConfig.PromptProject(projectFilePath)
+
+		if err != nil {
 			return nil, err
-		} else if err != nil && os.IsNotExist(err) {
-			p, err := projectConfig.PromptProject(projectFilePath)
+		}
 
-			if err != nil {
-				return nil, err
-			}
+		project = p
+	} else {
+		err = json.Unmarshal(projectFile, &project)
 
-			project = p
-		} else {
-			err = json.Unmarshal(projectFile, &project)
-
-			if err != nil {
-				return nil, err
-			}
-
+		if err != nil {
+			return nil, err
 		}
 	}
 
