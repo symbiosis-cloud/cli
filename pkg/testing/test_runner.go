@@ -41,6 +41,7 @@ type TestJob struct {
 
 type TestResult struct {
 	Name      string        `json:"name"`
+	Index     int           `json:"index"`
 	Image     string        `json:"image"`
 	Commands  []string      `json:"commands"`
 	State     TestState     `json:"state"`
@@ -80,6 +81,7 @@ func (t *TestRunner) Run(testOutputDir string) error {
 		deletePods = append(deletePods, podName)
 		job.result = &TestResult{
 			Name:      fmt.Sprintf("test-%d", i),
+			Index:     i,
 			Image:     job.Image,
 			Commands:  job.Commands,
 			State:     TEST_STATE_PENDING,
