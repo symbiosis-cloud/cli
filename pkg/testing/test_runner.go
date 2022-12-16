@@ -40,15 +40,16 @@ type TestJob struct {
 }
 
 type TestResult struct {
-	Name      string        `json:"name"`
-	Index     int           `json:"index"`
-	Image     string        `json:"image"`
-	Commands  []string      `json:"commands"`
-	State     TestState     `json:"state"`
-	ExitCode  int32         `json:"exitCode"`
-	Logs      string        `json:"logs"`
-	Duration  time.Duration `json:"duration_s"`
-	outputDir string
+	Name             string        `json:"name"`
+	Index            int           `json:"index"`
+	Image            string        `json:"image"`
+	Commands         []string      `json:"commands"`
+	State            TestState     `json:"state"`
+	ExitCode         int32         `json:"exitCode"`
+	Logs             string        `json:"logs"`
+	Duration         time.Duration `json:"durationSeconds"`
+	ContainerMessage string        `json:"containerMessage"`
+	outputDir        string
 }
 
 type TestRunner struct {
@@ -80,18 +81,12 @@ func (t *TestRunner) Run(testOutputDir string) error {
 		podName := fmt.Sprintf("test-job-%d", i)
 		deletePods = append(deletePods, podName)
 		job.result = &TestResult{
-			Name:      fmt.Sprintf("test-%d", i),
+			Name:      podName,
 			Index:     i,
 			Image:     job.Image,
 			Commands:  job.Commands,
 			State:     TEST_STATE_PENDING,
 			outputDir: testOutputDir,
-		}
-
-		err := job.result.Write()
-
-		if err != nil {
-			return err
 		}
 
 		podSpec := &v1.Pod{
@@ -102,7 +97,7 @@ func (t *TestRunner) Run(testOutputDir string) error {
 			Spec: v1.PodSpec{
 				Containers: []v1.Container{
 					{
-						Name:    fmt.Sprintf("test-container-%d", i),
+						Name:    "test-container",
 						Image:   job.Image,
 						Command: job.Commands,
 					},
@@ -123,7 +118,7 @@ func (t *TestRunner) Run(testOutputDir string) error {
 		errGroup.Go(func() error {
 			_, err := podsApi.Create(ctx, podSpec, metav1.CreateOptions{})
 			if err != nil {
-				return fmt.Errorf("Failed to create pod for test %d", num)
+				return fmt.Errorf("Failed to create pod for test %d: %s", num, err)
 			}
 
 			// result := make(chan *TestResult, 1)
@@ -140,6 +135,7 @@ func (t *TestRunner) Run(testOutputDir string) error {
 
 				select {
 				case <-quit:
+					t.CommandOpts.Logger.Debug().Msgf("Writing test result for %s (state %s)", runningJob.Image, runningJob.result.State)
 					err := runningJob.result.Write()
 
 					if err != nil {
@@ -241,7 +237,6 @@ func (j *TestJob) Run(
 	quit chan bool,
 	errchan chan error) {
 	for {
-
 		select {
 		case <-quit:
 			return
@@ -287,13 +282,13 @@ func (j *TestJob) Run(
 					j.result.ExitCode = x.State.Terminated.ExitCode
 					j.result.Logs = logs
 					j.result.Duration = time.Now().Sub(j.executionStart)
+					j.result.ContainerMessage = x.State.Terminated.Message
 
 					quit <- true
 				}
 			}
 
 			j.result.Duration = time.Now().Sub(j.executionStart)
-			j.result.Write()
 		}
 
 		// avoid spamming the k8s API

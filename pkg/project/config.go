@@ -29,13 +29,17 @@ type Deployment struct {
 	} `yaml:"kustomize,omitempty"`
 }
 
+type ProjectFile struct {
+	Name string `yaml:"name"`
+}
+
 type Test struct {
 	Image   string `yaml:"image,omitempty"`
 	Command string `yaml:"command,omitempty"`
 }
 
 type ProjectConfig struct {
-	Project *symbiosis.Project
+	Project *ProjectFile
 	Deploy  *Deployment `yaml:"deploy"`
 	Test    []Test      `yaml:"test,omitempty"`
 	Preview struct {
@@ -63,7 +67,7 @@ func (p *ProjectConfig) Parse() error {
 		return err
 	}
 
-	secrets, err := p.client.Secret.GetSecretsByProject(p.Project.Name)
+	secrets, err := p.client.Secret.GetSecretsByProjectAndEnvironment(p.Project.Name, symbiosis.ENVIRONMENT_PREVIEW)
 
 	if err != nil {
 		return err
@@ -73,10 +77,10 @@ func (p *ProjectConfig) Parse() error {
 
 	t := template.Must(template.New("parse-project-config").Funcs(template.FuncMap{
 		"Secret": func(secretName string) (string, error) {
-			if secret := secrets[secretName]; secret != nil {
-				return secret.Value, nil
+			if secrets[secretName] == "" {
+				return "", fmt.Errorf("Secret %s could not be found in project %s", secretName, p.Project.Name)
 			}
-			return "", fmt.Errorf("Secret %s could not be found in project %s", secretName, p.Project.Name)
+			return secrets[secretName], nil
 		},
 	}).Parse(string(f)))
 
@@ -162,7 +166,7 @@ func (p *ProjectConfig) RunDeploy() error {
 	return nil
 }
 
-func (p *ProjectConfig) PromptProject(path string) (*symbiosis.Project, error) {
+func (p *ProjectConfig) PromptProject(path string) (*ProjectFile, error) {
 
 	projects, err := p.client.Project.List()
 
@@ -198,8 +202,9 @@ func (p *ProjectConfig) PromptProject(path string) (*symbiosis.Project, error) {
 
 	file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	defer file.Close()
+	projectFile := &ProjectFile{Name: project.Name}
 
-	output, err := json.Marshal(project)
+	output, err := json.Marshal(projectFile)
 
 	if err != nil {
 		return nil, err
@@ -211,7 +216,7 @@ func (p *ProjectConfig) PromptProject(path string) (*symbiosis.Project, error) {
 		return nil, err
 	}
 
-	return project, nil
+	return projectFile, nil
 }
 
 func (p *ProjectConfig) SetIdentity(identity *identity.ClusterIdentity) {
@@ -246,7 +251,7 @@ func NewProjectConfig(file string, opts *symcommand.CommandOpts, client *symbios
 		clientset = cs
 	}
 
-	var project *symbiosis.Project
+	var project *ProjectFile
 
 	projectConfig := &ProjectConfig{
 		Path:        filePath,
@@ -257,7 +262,7 @@ func NewProjectConfig(file string, opts *symcommand.CommandOpts, client *symbios
 	}
 
 	if opts.Project != nil {
-		project = opts.Project
+		project = &ProjectFile{Name: opts.Project.Name}
 	} else {
 		projectFilePath := path.Join(dir, ".symbiosis.project")
 		projectConfig.ProjectFilePath = projectFilePath
