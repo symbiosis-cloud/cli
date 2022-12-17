@@ -30,10 +30,11 @@ var (
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:          "sym <command> <subcommand>",
-	Short:        "Easily manage your Symbiosis resources using this CLI application.",
-	Long:         ``,
-	SilenceUsage: true,
+	Use:           "sym <command> <subcommand>",
+	Short:         "Easily manage your Symbiosis resources using this CLI application.",
+	Long:          ``,
+	SilenceUsage:  true,
+	SilenceErrors: true,
 	PersistentPreRunE: func(command *cobra.Command, args []string) error {
 
 		// TODO: find a better way to initialise clients. Because of these commands cannot have pre-runs
@@ -53,6 +54,9 @@ var RootCmd = &cobra.Command{
 func Execute() {
 	err := RootCmd.Execute()
 	if err != nil {
+		defer text.EnableColors()
+
+		fmt.Printf("%s** ERROR **\n %s %s\n", text.FgRed.EscapeSeq(), err.Error(), text.FgWhite.EscapeSeq())
 		os.Exit(1)
 	}
 }
@@ -91,7 +95,7 @@ func init() {
 		commands = append(commands, betaCommands...)
 		defer text.EnableColors()
 
-		fmt.Printf("%s** NOTE ** You enabled beta commands, these are currently not considered fully functional so use with caution.%s\n", text.FgRed.EscapeSeq(), text.FgWhite.EscapeSeq())
+		fmt.Printf("%s** NOTE ** You enabled beta commands, these are currently not considered fully functional so use with caution.%s\n", text.FgYellow.EscapeSeq(), text.FgWhite.EscapeSeq())
 	}
 
 	for _, command := range commands {
