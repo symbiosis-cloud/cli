@@ -37,7 +37,7 @@ func (c *CreateNodePoolCommand) Command() *cobra.Command {
 		Long:  ``,
 		PreRunE: func(command *cobra.Command, args []string) error {
 			if len(args) < 2 {
-				return fmt.Errorf("Please provide a node-pool name and cluster name (sym node-pool create <name> <cluster name>")
+				return fmt.Errorf("Please provide a node-pool name and cluster name (sym node-pool create <name> <cluster name>)")
 			}
 
 			return nil

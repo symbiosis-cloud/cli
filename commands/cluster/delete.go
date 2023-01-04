@@ -25,7 +25,7 @@ func (c *DeleteClusterCommand) Command() *cobra.Command {
 		Long:  ``,
 		PreRunE: func(command *cobra.Command, args []string) error {
 			if len(args) == 0 {
-				return fmt.Errorf("Please provide a cluster name (sym cluster delete <cluster>")
+				return fmt.Errorf("Please provide a cluster name (sym cluster delete <cluster>)")
 			}
 
 			return output.Confirmation(fmt.Sprintf("Are you sure you want want to delete %s", args[0]))

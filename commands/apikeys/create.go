@@ -26,7 +26,7 @@ func (c *CreateApiKeyCommand) Command() *cobra.Command {
 		Long:  ``,
 		PreRunE: func(command *cobra.Command, args []string) error {
 			if len(args) < 1 {
-				return fmt.Errorf("Please provide at least an API key name. Description is optional. (sym api-key create <role> [description]")
+				return fmt.Errorf("Please provide at least an API key name. Description is optional. (sym api-key create <role> [description])")
 			}
 
 			role := args[0]
@@ -57,7 +57,7 @@ func (c *CreateApiKeyCommand) Command() *cobra.Command {
 			}
 			defer text.EnableColors()
 
-			c.CommandOpts.Logger.Info().Msgf("%s** NOTE ** This token will not be shown again.%s", text.FgRed.EscapeSeq(), text.FgWhite.EscapeSeq())
+			c.CommandOpts.Logger.Info().Msgf("%s** NOTE ** This token will not be shown again.%s", text.FgYellow.EscapeSeq(), text.FgWhite.EscapeSeq())
 
 			err = output.NewOutput(output.TableOutput{
 				Headers: []string{"ID", "Description", "Token", "Role"},
