@@ -54,3 +54,12 @@ jobs:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+
+      - name: Update Homebrew formula
+        uses: dawidd6/action-homebrew-bump-formula@v3
+        with:
+          token: ${{secrets.TOKEN}}
+          tap: https://github.com/symbiosis-cloud/homebrew-tap
+          formula: sym
+          force: false
+          livecheck: false
