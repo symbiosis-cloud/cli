@@ -47,7 +47,7 @@ func (c *DescribeClusterCommand) Command() *cobra.Command {
 		Long:  ``,
 		PreRunE: func(command *cobra.Command, args []string) error {
 			if len(args) == 0 {
-				return fmt.Errorf("Please provide a cluster name (sym cluster describe <cluster>")
+				return fmt.Errorf("Please provide a cluster name (sym cluster describe <cluster>)")
 			}
 			return nil
 		},

@@ -21,7 +21,7 @@ type ApplyCommand struct {
 func (c *ApplyCommand) Execute(command *cobra.Command, args []string) error {
 
 	if len(args) == 0 {
-		return fmt.Errorf("Please provide a cluster name (sym apply <cluster>")
+		return fmt.Errorf("Please provide a cluster name (sym apply <cluster>)")
 	}
 
 	clusterName := args[0]

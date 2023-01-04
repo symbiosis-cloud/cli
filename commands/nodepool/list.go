@@ -25,7 +25,7 @@ func (c *ListNodePoolCommand) Command() *cobra.Command {
 		Long:  ``,
 		PreRunE: func(command *cobra.Command, args []string) error {
 			if len(args) == 0 {
-				return fmt.Errorf("Please provide a cluster name (sym node-pool list <cluster>")
+				return fmt.Errorf("Please provide a cluster name (sym node-pool list <cluster>)")
 			}
 
 			return nil

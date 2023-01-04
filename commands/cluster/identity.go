@@ -48,7 +48,7 @@ func (c *ClusterIdentityCommand) Command() *cobra.Command {
 		Long:  ``,
 		PreRunE: func(command *cobra.Command, args []string) error {
 			if len(args) == 0 {
-				return fmt.Errorf("Please provide a cluster name (sym identity <cluster>")
+				return fmt.Errorf("Please provide a cluster name (sym identity <cluster>)")
 			}
 
 			if merge {

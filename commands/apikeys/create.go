@@ -26,7 +26,7 @@ func (c *CreateApiKeyCommand) Command() *cobra.Command {
 		Long:  ``,
 		PreRunE: func(command *cobra.Command, args []string) error {
 			if len(args) < 1 {
-				return fmt.Errorf("Please provide at least an API key name. Description is optional. (sym api-key create <role> [description]")
+				return fmt.Errorf("Please provide at least an API key name. Description is optional. (sym api-key create <role> [description])")
 			}
 
 			role := args[0]

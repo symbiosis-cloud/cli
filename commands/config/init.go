@@ -18,7 +18,7 @@ var Init = &cobra.Command{
 	Long:  ``,
 	RunE: func(command *cobra.Command, args []string) error {
 		if len(args) == 0 {
-			return fmt.Errorf("please provide an API Key to sym config init")
+			return fmt.Errorf("Please provide an API Key to sym config init")
 		}
 
 		apiKey := args[0]
