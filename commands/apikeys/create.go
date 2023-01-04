@@ -57,7 +57,7 @@ func (c *CreateApiKeyCommand) Command() *cobra.Command {
 			}
 			defer text.EnableColors()
 
-			c.CommandOpts.Logger.Info().Msgf("%s** NOTE ** This token will not be shown again.%s", text.FgRed.EscapeSeq(), text.FgWhite.EscapeSeq())
+			c.CommandOpts.Logger.Info().Msgf("%s** NOTE ** This token will not be shown again.%s", text.FgYellow.EscapeSeq(), text.FgWhite.EscapeSeq())
 
 			err = output.NewOutput(output.TableOutput{
 				Headers: []string{"ID", "Description", "Token", "Role"},

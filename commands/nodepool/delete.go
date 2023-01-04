@@ -25,7 +25,7 @@ func (c *DeleteNodePoolCommand) Command() *cobra.Command {
 		Long:  ``,
 		PreRunE: func(command *cobra.Command, args []string) error {
 			if len(args) == 0 {
-				return fmt.Errorf("Please provide a cluster name (sym node-pool delete <nodePoolId>")
+				return fmt.Errorf("Please provide a node pool ID (sym node-pool delete <nodePoolId>")
 			}
 
 			return output.Confirmation(fmt.Sprintf("Are you sure you want want to delete node-pool with ID %s", args[0]))
