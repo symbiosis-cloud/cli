@@ -17,6 +17,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/symbiosis-cloud/cli/pkg/symcommand"
+	"github.com/symbiosis-cloud/cli/pkg/util/firebase"
 	"github.com/symbiosis-cloud/symbiosis-go"
 )
 
@@ -60,19 +61,41 @@ func (c *LoginCommand) Command() *cobra.Command {
 		Short: "Prompts you to login to Symbiosis and store login details",
 		Long:  ``,
 		RunE: func(command *cobra.Command, args []string) error {
-
 			l, close := createListener()
 			defer close()
+
+			initialRequest := true
+
 			http.Handle("/", http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+
+				// prevent handling more than one request
+				if !initialRequest {
+					close()
+					return
+				}
+
+				c.CommandOpts.Logger.Info().Msg("Validating authentication information")
+
 				if !r.URL.Query().Has("token") {
 					c.CommandOpts.Logger.Error().Msgf("Could not retrieve token, please contact Symbiosis Support")
 					close()
 				}
 
+				refreshToken := r.URL.Query().Get("token")
+
 				viper.Set("auth.method", "token")
-				viper.Set("auth.token", r.URL.Query().Get("token"))
+				viper.Set("auth.refresh_token", refreshToken)
 				viper.Set("auth.team_id", r.URL.Query().Get("teamId"))
 				viper.WriteConfig()
+
+				err := firebase.ValidateToken(refreshToken)
+
+				if err != nil {
+					c.CommandOpts.Logger.Error().Msgf("Failed to retrieve authentication token, please contact Symbiosis Support")
+					close()
+				}
+
+				initialRequest = false
 
 				http.Redirect(rw, r, "https://app.symbiosis.host/oauth/done", http.StatusTemporaryRedirect)
 

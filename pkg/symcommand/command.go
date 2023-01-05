@@ -30,13 +30,20 @@ func Initialise(commands []Command, command *cobra.Command) error {
 		return err
 	}
 
+	yes, err := command.Flags().GetBool("yes")
+
+	if err != nil {
+		return err
+	}
+
 	// add commands
 	var c *symbiosis.Client
 
 	authMethod := viper.GetString("auth.method")
+	refreshToken := viper.GetString("auth.refresh_token")
 
 	if !isAuthCmd {
-		err := firebase.ValidateToken()
+		err := firebase.ValidateToken(refreshToken)
 
 		if err != nil {
 			log.Fatalf(err.Error())
@@ -101,6 +108,7 @@ func Initialise(commands []Command, command *cobra.Command) error {
 		Verbose: verbose,
 		Project: project,
 		Logger:  log,
+		Yes:     yes,
 	}
 
 	for _, command := range commands {

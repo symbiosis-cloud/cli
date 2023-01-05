@@ -26,6 +26,7 @@ var (
 	cfgFile            string
 	verbose            bool
 	OutputFormat       string
+	yes                bool
 )
 
 // RootCmd represents the base command when called without any subcommands
@@ -35,7 +36,6 @@ var RootCmd = &cobra.Command{
 	Long:         ``,
 	SilenceUsage: true,
 	PersistentPreRunE: func(command *cobra.Command, args []string) error {
-
 		// TODO: find a better way to initialise clients. Because of these commands cannot have pre-runs
 		// probably move it to OnInitialize
 		err := symcommand.Initialise(commands, command)
@@ -60,16 +60,12 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	RootCmd.PersistentFlags().String("config", "$HOME/.symbiosis/config.yaml", "config file (default is $HOME/.symbiosis/config.yaml)")
 	RootCmd.PersistentFlags().StringP("project", "p", "", "Manually sets the project")
 	RootCmd.PersistentFlags().Bool("verbose", false, "Enable verbose logging")
 	RootCmd.PersistentFlags().Bool("yes", false, "Skip manual confirmation")
-	// RootCmd.PersistentFlags().Bool("beta", false, "Enable beta features (set to --beta=true to enable)")
-
 	RootCmd.PersistentFlags().StringVarP(&OutputFormat, "output", "o", "table", "Output format (table, json or yaml). Default: table")
 
-	viper.BindPFlag("config", RootCmd.PersistentFlags().Lookup("config"))
-	viper.BindPFlag("yes", RootCmd.PersistentFlags().Lookup("yes"))
+	RootCmd.Flags().StringVar(&cfgFile, "config", "$HOME/.symbiosis/config.yaml", "config file (default is $HOME/.symbiosis/config.yaml)")
 
 	betaCommands := []symcommand.Command{
 		&RunCommand{},
@@ -122,14 +118,12 @@ func initConfig() {
 		log.Fatal(err)
 	}
 
-	configFile := viper.GetString("config")
-
-	if configFile == "$HOME/.symbiosis/config.yaml" {
+	if cfgFile == "$HOME/.symbiosis/config.yaml" {
 		isDefault = true
-		configFile = home + "/.symbiosis/config.yaml"
+		cfgFile = home + "/.symbiosis/config.yaml"
 	}
 
-	if _, err := os.Stat(configFile); os.IsNotExist(err) {
+	if _, err := os.Stat(cfgFile); os.IsNotExist(err) {
 
 		if isDefault {
 
@@ -148,11 +142,11 @@ func initConfig() {
 				log.Fatal(err)
 			}
 		} else {
-			log.Fatalf("Config file %s does not exist, please create it first or use the default.", configFile)
+			log.Fatalf("Config file %s does not exist, please create it first or use the default.", cfgFile)
 		}
 	}
 
-	dir, file := path.Split(configFile)
+	dir, file := path.Split(cfgFile)
 
 	if dir == "" {
 		wd, err := os.Getwd()
@@ -175,7 +169,7 @@ func initConfig() {
 
 	if err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			log.Fatalf("Config file %s cannot be read", configFile)
+			log.Fatalf("Config file %s cannot be read", cfgFile)
 		} else {
 			log.Fatalf("fatal error config file: %v", err)
 		}

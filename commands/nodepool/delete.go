@@ -28,7 +28,7 @@ func (c *DeleteNodePoolCommand) Command() *cobra.Command {
 				return fmt.Errorf("Please provide a node pool ID (sym node-pool delete <nodePoolId>)")
 			}
 
-			return output.Confirmation(fmt.Sprintf("Are you sure you want want to delete node-pool with ID %s", args[0]))
+			return output.Confirmation(fmt.Sprintf("Are you sure you want want to delete node-pool with ID %s", args[0]), c.CommandOpts.Yes)
 		},
 		RunE: func(command *cobra.Command, args []string) error {
 			nodePoolId := args[0]
