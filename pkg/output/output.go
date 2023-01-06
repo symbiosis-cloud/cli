@@ -7,7 +7,6 @@ import (
 
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/manifoldco/promptui"
-	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
 	"k8s.io/utils/strings/slices"
 )
@@ -109,9 +108,7 @@ func NewOutput(table TableOutput, dataOutput interface{}) *Output {
 	return &Output{table, dataOutput}
 }
 
-func Confirmation(prompt string) error {
-	yes := viper.GetBool("yes")
-
+func Confirmation(prompt string, yes bool) error {
 	if !yes {
 		prompt := promptui.Prompt{
 			Label:     prompt,

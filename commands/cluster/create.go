@@ -48,7 +48,7 @@ func (c *CreateClusterCommand) Command() *cobra.Command {
 			}
 
 			if merge {
-				return output.Confirmation("Are you sure you want to merge the new config with your existing .kube/config file")
+				return output.Confirmation("Are you sure you want to merge the new config with your existing .kube/config file", c.CommandOpts.Yes)
 			}
 
 			return nil

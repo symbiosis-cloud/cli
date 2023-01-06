@@ -31,25 +31,30 @@ var (
 	FirebaseToken string
 )
 
-func ValidateToken() error {
+func ValidateToken(refreshToken string) error {
 	if viper.GetString("auth.method") == "token" {
-		claims := jwt.MapClaims{}
-		jwt.ParseWithClaims(viper.GetString("auth.token"), claims, func(token *jwt.Token) (interface{}, error) {
-			return nil, nil
-		})
 
-		if claims["exp"] == nil {
-			return fmt.Errorf("Provided token is invalid")
+		token := viper.GetString("auth.token")
+		tokenExpired := false
+
+		if token != "" {
+			claims := jwt.MapClaims{}
+			jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
+				return nil, nil
+			})
+
+			if claims["exp"] == nil {
+				return fmt.Errorf("Provided token is invalid")
+			}
+
+			timeSec := time.Unix(int64(claims["exp"].(float64)), 0)
+			tokenExpired = time.Now().UTC().After(timeSec.UTC())
 		}
 
-		timeSec := time.Unix(int64(claims["exp"].(float64)), 0)
-		tokenExpired := time.Now().UTC().After(timeSec.UTC())
-
-		refreshToken := viper.GetString("auth.refresh_token")
 		apiEndpoint := viper.GetString("api_url")
 
 		// if the access token has expired we have to renew it
-		if tokenExpired {
+		if tokenExpired || token == "" {
 
 			payload, err := json.Marshal(RefreshTokenInput{"refresh_token", refreshToken})
 

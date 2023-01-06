@@ -10,4 +10,5 @@ type CommandOpts struct {
 	Namespace string
 	Project   *symbiosis.Project
 	Logger    zerolog.Logger
+	Yes       bool
 }

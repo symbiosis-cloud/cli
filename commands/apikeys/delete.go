@@ -28,7 +28,7 @@ func (c *DeleteApiKeyCommand) Command() *cobra.Command {
 				return fmt.Errorf("Please provide an api-key ID (sym api-key delete <id>)")
 			}
 
-			return output.Confirmation(fmt.Sprintf("Are you sure you want want to delete api-key %s", args[0]))
+			return output.Confirmation(fmt.Sprintf("Are you sure you want want to delete api-key %s", args[0]), c.CommandOpts.Yes)
 		},
 		RunE: func(command *cobra.Command, args []string) error {
 			apiKeyId := args[0]
