@@ -12,7 +12,9 @@ brew install symbiosis-cloud/tap/cli
 
 ### Linux
 
+```bash
 curl -s https://raw.githubusercontent.com/symbiosis-cloud/cli/main/install.sh | sh
+```
 
 ## Usage
 
