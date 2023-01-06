@@ -54,8 +54,10 @@ func (c *RunCommand) Execute(command *cobra.Command, args []string) error {
 
 	// cluster does not exist, create it
 	if err != nil && strings.Contains(err.Error(), "not found") {
-		c.CreateCluster(clusterName, region, deploymentFlags.IdentityOutputPath)
-	} else if err != nil {
+		err = c.CreateCluster(clusterName, region, deploymentFlags.IdentityOutputPath)
+	}
+
+	if err != nil {
 		return err
 	} else {
 		c.CommandOpts.Logger.Info().Msgf("Using existing cluster: %s", clusterName)
