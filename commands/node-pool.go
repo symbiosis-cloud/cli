@@ -38,6 +38,7 @@ func (n *NodePoolCommand) Command() *cobra.Command {
 		&nodepool.ListNodePoolCommand{},
 		&nodepool.DeleteNodePoolCommand{},
 		&nodepool.DescribeNodePoolCommand{},
+		&nodepool.UpdateNodePoolCommand{},
 	}
 
 	for _, c := range nodepoolCommands {
@@ -48,7 +49,7 @@ func (n *NodePoolCommand) Command() *cobra.Command {
 }
 
 func (n *NodePoolCommand) Execute(command *cobra.Command, args []string) {
-	fmt.Println("Available commands: [create, list, delete, identity]")
+	fmt.Println("Available commands: [create, list, delete, describe, update]")
 }
 
 func (c *NodePoolCommand) Init(client *symbiosis.Client, opts *symcommand.CommandOpts) {
