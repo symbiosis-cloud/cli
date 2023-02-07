@@ -17,8 +17,6 @@ type CompletionCommand struct {
 	CommandOpts *symcommand.CommandOpts
 }
 
-var CompletionCommands = []string{"node-types", "regions", "roles"}
-
 func (c *CompletionCommand) Execute(command *cobra.Command, args []string) {
 	switch args[0] {
 	case "bash":
