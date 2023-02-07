@@ -40,8 +40,6 @@ func (c *CompletionCommand) Command() *cobra.Command {
 
 	Bash:
 
-		$ source <(%[1]s completion bash)
-
 		# To load completions for each session, execute once:
 		# Linux:
 		$ %[1]s completion bash > /etc/bash_completion.d/%[1]s

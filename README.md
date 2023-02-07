@@ -62,8 +62,6 @@ To load completions:
 
 ### Bash
 ```
-$ source <(sym completion bash)
-
 # To load completions for each session, execute once:
 
 # Linux:
