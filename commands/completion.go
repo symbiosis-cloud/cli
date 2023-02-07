@@ -81,8 +81,6 @@ func (c *CompletionCommand) Command() *cobra.Command {
 		Run:                   c.Execute,
 	}
 
-	symcommand.SetDeploymentFlags(cmd)
-
 	return cmd
 }
 
