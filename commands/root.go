@@ -80,6 +80,7 @@ func init() {
 		&ApiKeysCommand{},
 		&VersionCommand{},
 		&TestCommand{},
+		&CompletionCommand{},
 	}
 
 	// TODO: find a way to toggle beta commands via a flag

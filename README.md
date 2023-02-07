@@ -56,3 +56,12 @@ Currently the CLI is in Beta. We only expose a limited number of CLI commands cu
 * Describe node pool
 * List node pools
 
+### Autocomplete
+
+You can run:
+
+```bash
+sym completion --help
+```
+
+To get instructions on how to setup autocomplete for your specific shell.
