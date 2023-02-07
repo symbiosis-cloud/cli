@@ -56,3 +56,46 @@ Currently the CLI is in Beta. We only expose a limited number of CLI commands cu
 * Describe node pool
 * List node pools
 
+## Autocomplete
+
+To load completions:
+
+### Bash
+```
+$ source <(sym completion bash)
+
+# To load completions for each session, execute once:
+
+# Linux:
+$ sym completion bash > /etc/bash_completion.d/sym
+
+# macOS:
+$ sym completion bash > $(brew --prefix)/etc/bash_completion.d/sym
+```
+### Zsh (Linux / macOS)
+```
+# If shell completion is not already enabled in your environment,
+# you will need to enable it.  You can execute the following once:
+
+$ echo "autoload -U compinit; compinit" >> ~/.zshrc
+
+# To load completions for each session, execute once:
+$ sym completion zsh > "${fpath[1]}/_sym"
+
+# You will need to start a new shell for this setup to take effect.
+```
+### fish:
+```
+$ sym completion fish | source
+
+# To load completions for each session, execute once:
+$ sym completion fish > ~/.config/fish/completions/sym.fish
+```
+### PowerShell
+```
+PS> sym completion powershell | Out-String | Invoke-Expression
+
+# To load completions for every new session, run:
+PS> sym completion powershell > sym.ps1
+# and source this file from your PowerShell profile.
+```
